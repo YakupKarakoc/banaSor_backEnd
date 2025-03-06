@@ -1,1 +1,1 @@
-console.log("Merhaba, Node.js dünyası!");
+console.log("Merhaba, banaSor uygulamasına hoşgeldiniz");
