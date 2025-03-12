@@ -18,7 +18,7 @@ exports.register = async (req, res) => {
         .status(400)
         .json({ error: "Kullanıcı adı veya e-posta zaten kullanılıyor." });
     }
-
+  
     const hashedPassword = await bcrypt.hash(sifre, 10);
 
     const newUser = await pool.query(
