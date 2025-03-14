@@ -13,7 +13,7 @@ const router = express.Router();
 
 /**
  * @swagger
- * /user/profile:
+ * /api/user/profile:
  *   get:
  *     summary: Kullanıcı profilini getir
  *     tags: [User]

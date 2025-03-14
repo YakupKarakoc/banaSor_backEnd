@@ -17,28 +17,38 @@ app.use(cors());
 // Swagger ayarları güncellendi
 const swaggerOptions = {
   swaggerDefinition: {
-    openapi: '3.0.0',
+    openapi: "3.0.0",
     info: {
-      title: "Kullanıcı API",
+      title: "BanaSor API",
       version: "1.0.0",
-      description: "Kullanıcı kayıt, giriş ve profil API'si",
+      description: "Kullanıcı kayıt, giriş ve forum API'leri",
     },
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+        },
+      },
+    },
+    security: [{ bearerAuth: [] }],
     servers: [{ url: "http://localhost:3000" }],
   },
-  apis: ["../routes/*.js"], // Dizin yolu doğru ayarlandı
+  apis: ["./routes/*.js"], // Dizin yolu doğru ayarlandı
 };
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // Test endpoint (root)
-app.get('/', (req, res) => {
+app.get("/", (req, res) => {
   res.json({ message: "BanaSor API çalışıyor 🚀" });
 });
 
 // Route tanımlamaları düzeltildi
-app.use('/auth', authRoutes);
-app.use('/user', userRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/user", userRoutes);
 
 // Yerelde test için bunu kullan (Vercel deploy yaparken kapat):
 const port = process.env.PORT || 3000;

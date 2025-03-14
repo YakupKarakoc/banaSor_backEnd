@@ -1,5 +1,10 @@
 const express = require("express");
-const { register, login } = require("../controllers/authController");
+const {
+  register,
+  login,
+  sendVerification,
+  verifyCode,
+} = require("../controllers/authController");
 
 const router = express.Router();
 
@@ -12,7 +17,7 @@ const router = express.Router();
 
 /**
  * @swagger
- * /auth/register:
+ * /api/auth/register:
  *   post:
  *     summary: Yeni kullanıcı kaydı
  *     tags: [Auth]
@@ -47,7 +52,7 @@ router.post("/register", register);
 
 /**
  * @swagger
- * /auth/login:
+ * /api/auth/login:
  *   post:
  *     summary: Kullanıcı girişi
  *     tags: [Auth]
@@ -71,5 +76,67 @@ router.post("/register", register);
  *         description: Geçersiz kimlik bilgileri
  */
 router.post("/login", login);
+
+/**
+ * @swagger
+ * /api/auth/sendVerification:
+ *   post:
+ *     summary: Kullanıcıya doğrulama kodu gönderir.
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - kullaniciId
+ *               - email
+ *             properties:
+ *               kullaniciId:
+ *                 type: integer
+ *                 example: 1
+ *               email:
+ *                 type: string
+ *                 example: "ornek@mail.com"
+ *     responses:
+ *       200:
+ *         description: Doğrulama kodu başarıyla gönderildi.
+ *       500:
+ *         description: Sunucu hatası.
+ */
+router.post("/sendVerification", sendVerification);
+
+/**
+ * @swagger
+ * /api/auth/verifyCode:
+ *   post:
+ *     summary: Kullanıcı doğrulama kodunu girerek hesabını onaylar.
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - kullaniciId
+ *               - kod
+ *             properties:
+ *               kullaniciId:
+ *                 type: integer
+ *                 example: 1
+ *               kod:
+ *                 type: string
+ *                 example: "ABC12345"
+ *     responses:
+ *       200:
+ *         description: E-posta başarıyla doğrulandı.
+ *       400:
+ *         description: Kod geçersiz veya süresi dolmuş.
+ *       500:
+ *         description: Sunucu hatası.
+ */
+router.post("/verifyCode", verifyCode);
 
 module.exports = router;
