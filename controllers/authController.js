@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const pool = require("../config/db");
 const dotenv = require("dotenv");
 const nodemailer = require("nodemailer");
+const crypto = require("crypto");
 
 dotenv.config();
 
@@ -68,29 +69,29 @@ const generateVerificationCode = () => {
 };
 
 // 📌 Doğrulama kodunu e-posta ile gönderme fonksiyonu
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: process.env.SMTP_PORT,
+  secure: false, // 587 için 'false' olmalı
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
+
 exports.sendVerification = async (req, res) => {
   try {
     const { kullaniciId, email } = req.body;
-    const kod = generateVerificationCode(); // Rastgele kod oluştur
+    const kod = generateVerificationCode();
 
-    // 📌 Kullanıcı doğrulama kodunu DB'ye kaydet
     await pool.query(
       `INSERT INTO KullaniciDogrulama (kullaniciId, kod, bitisTarihi) 
        VALUES ($1, $2, NOW() + INTERVAL '10 minutes')`,
       [kullaniciId, kod]
     );
 
-    // E-posta gönderme işlemi
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
     await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+      from: `"BanaSor" <${process.env.SMTP_USER}>`,
       to: email,
       subject: "E-posta Doğrulama Kodu",
       text: `Doğrulama kodunuz: ${kod} (10 dakika içinde kullanmalısınız)`,
