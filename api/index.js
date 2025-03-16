@@ -53,7 +53,16 @@ app.use("/api/user", userRoutes);
 // Yerelde test için bunu kullan (Vercel deploy yaparken kapat):
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
-  console.log(`Server ${port} portunda çalışıyor 🚀`);
+  console.log(`🚀 Server ${port} portunda çalışıyor!`);
+  console.log(`📄 API dökümantasyonu: http://localhost:${port}/api-docs/`);
+});
+
+app.use((err, req, res, next) => {
+  console.error("🔥 Hata yakalandı:", err); // Konsola detaylı hata yazdır
+  res.status(500).json({
+    error: "Sunucu hatası",
+    details: err.message,
+  });
 });
 
 module.exports = app;

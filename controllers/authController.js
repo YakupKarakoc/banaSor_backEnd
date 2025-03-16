@@ -7,31 +7,36 @@ const crypto = require("crypto");
 
 dotenv.config();
 
-exports.register = async (req, res) => {
+exports.register = async (req, res, next) => {
   try {
     const { ad, soyad, kullaniciAdi, email, sifre, kullaniciTuruId } = req.body;
 
+    // Kullanıcı adı veya e-posta mevcut mu?
     const checkUser = await pool.query(
       "SELECT * FROM Kullanici WHERE kullaniciAdi = $1 OR email = $2",
       [kullaniciAdi, email]
     );
+
     if (checkUser.rows.length > 0) {
       return res
         .status(400)
         .json({ error: "Kullanıcı adı veya e-posta zaten kullanılıyor." });
     }
 
+    // Şifreyi hashle
     const hashedPassword = await bcrypt.hash(sifre, 10);
 
+    // Yeni kullanıcıyı ekle
     const newUser = await pool.query(
-      `INSERT INTO Kullanici (ad, soyad, kullaniciAdi, email, sifre, kullaniciTuruId, aktifMi) 
-             VALUES ($1, $2, $3, $4, $5, $6, 'Aktif') RETURNING *`,
+      `INSERT INTO Kullanici (ad, soyad, kullaniciAdi, email, sifre, kullaniciTuruId, puan, aktifMi, onaylandiMi, olusturmaTarihi) 
+       VALUES ($1, $2, $3, $4, $5, $6, 0, TRUE, FALSE, CURRENT_TIMESTAMP) RETURNING *`,
       [ad, soyad, kullaniciAdi, email, hashedPassword, kullaniciTuruId]
     );
 
     res.status(201).json({ message: "Kayıt başarılı!", user: newUser.rows[0] });
   } catch (error) {
-    res.status(500).json({ error: "Sunucu hatası" });
+    console.error("Kayıt Hatası:", error.message); // Hata detaylarını yazdır
+    next(error); // Express hata middleware'ine yönlendir
   }
 };
 
