@@ -20,7 +20,15 @@
     "nodemon": "^3.1.9",
     "pg": "^8.13.3",
     "swagger-jsdoc": "^6.2.8",
+<<<<<<< HEAD
     "swagger-ui-express": "^5.0.1",
+=======
+    "swagger-ui-express": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "ts-node": "^10.9.2",
+>>>>>>> 78785b9377cb6a3ca589be980d7337d5131058bb
     "typescript": "^5.8.2"
   }
 }
