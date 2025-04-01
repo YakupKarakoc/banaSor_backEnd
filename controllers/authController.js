@@ -139,3 +139,115 @@ exports.verifyCode = async (req, res) => {
     res.status(500).json({ error: "Sunucu hatası" });
   }
 };
+
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body; // Kullanıcıdan sadece e-posta alıyoruz
+
+    // Kullanıcıyı email ile bul
+    const userQuery = `
+      SELECT * FROM Kullanici 
+      WHERE email = $1
+    `;
+
+    console.log("E-posta:", email);
+
+    const user = await pool.query(userQuery, [email]);
+    console.log("Kullanıcı Verisi:", user.rows);
+
+    if (user.rows.length === 0) {
+      return res
+        .status(400)
+        .json({ error: "Bu e-posta adresine sahip kullanıcı bulunamadı" });
+    }
+
+    const kullaniciId = user.rows[0].kullaniciid;
+    const resetCode = crypto.randomBytes(4).toString("hex"); // 4 baytlık rastgele kod
+    const expirationTime = new Date(Date.now() + 15 * 60 * 1000); // 15 dakika geçerli
+
+    // Şifre sıfırlama kodunu veritabanına ekle
+    await pool.query(
+      "INSERT INTO SifreSifirlama (kullaniciId, kod, bitisTarihi) VALUES ($1, $2, $3)",
+      [kullaniciId, resetCode, expirationTime]
+    );
+
+    // 📩 Kullanıcıya e-posta gönderme işlemi
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      secure: false, // 587 için 'false' olmalı
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: `"BanaSor" <${process.env.SMTP_USER}>`,
+      to: user.rows[0].email,
+      subject: "Şifre Sıfırlama Kodu",
+      text: `Şifre sıfırlama kodunuz: ${resetCode} (15 dakika geçerlidir)`,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    res
+      .status(200)
+      .json({ message: "Şifre sıfırlama kodu e-posta ile gönderildi." });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Sunucu hatası" });
+  }
+};
+
+exports.resetPassword = async (req, res) => {
+  try {
+    const { email, resetCode, newPassword } = req.body;
+
+    // Kullanıcıyı email ile bul
+    const userQuery = `SELECT * FROM Kullanici WHERE email = $1`;
+    const user = await pool.query(userQuery, [email]);
+
+    if (user.rows.length === 0) {
+      return res.status(400).json({ error: "Geçersiz kullanıcı" });
+    }
+
+    const kullaniciId = user.rows[0].kullaniciid;
+
+    // Şifre sıfırlama kodunu kontrol et
+    const resetQuery = `
+      SELECT * FROM SifreSifirlama 
+      WHERE kullaniciId = $1 AND kod = $2 AND NOW() < bitisTarihi AND sifirlandiMi = FALSE
+    `;
+
+    const resetEntry = await pool.query(resetQuery, [kullaniciId, resetCode]);
+
+    // 📌 Debug Logları
+    console.log("Girilen Reset Kodu:", resetCode);
+    console.log("Veritabanındaki Kayıtlar:", resetEntry.rows);
+
+    if (resetEntry.rows.length === 0) {
+      return res.status(400).json({ error: "Geçersiz veya süresi dolmuş kod" });
+    }
+
+    // Yeni şifreyi hashle
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Kullanıcının şifresini güncelle
+    await pool.query("UPDATE Kullanici SET sifre = $1 WHERE kullaniciId = $2", [
+      hashedPassword,
+      kullaniciId,
+    ]);
+
+    // Kullanılan şifre sıfırlama kodunu geçersiz hale getir
+    await pool.query(
+      "UPDATE SifreSifirlama SET sifirlandiMi = TRUE WHERE sifirlamaId = $1",
+      [resetEntry.rows[0].sifirlamaid]
+    );
+
+    res.status(200).json({ message: "Şifre başarıyla güncellendi" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Sunucu hatası" });
+  }
+};

@@ -7,6 +7,7 @@ const swaggerUi = require("swagger-ui-express");
 // Routes importları düzeltildi
 const authRoutes = require("../routes/authRoutes");
 const userRoutes = require("../routes/userRoutes");
+const educationRoutes = require("../routes/educationRoutes");
 
 dotenv.config();
 
@@ -49,6 +50,7 @@ app.get("/", (req, res) => {
 // Route tanımlamaları düzeltildi
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/education", educationRoutes);
 
 // Yerelde test için bunu kullan (Vercel deploy yaparken kapat):
 const port = process.env.PORT || 3000;

@@ -4,6 +4,8 @@ const {
   login,
   sendVerification,
   verifyCode,
+  forgotPassword,
+  resetPassword,
 } = require("../controllers/authController");
 
 const router = express.Router();
@@ -138,5 +140,63 @@ router.post("/sendVerification", sendVerification);
  *         description: Sunucu hatası.
  */
 router.post("/verifyCode", verifyCode);
+
+/**
+ * @swagger
+ * /api/auth/forgotPassword:
+ *   post:
+ *     summary: Şifre sıfırlama kodunu gönderme
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: "example@mail.com"
+ *     responses:
+ *       200:
+ *         description: Şifre sıfırlama işlemi için mailinize kod gönderilmiştir.
+ *       400:
+ *         description: Geçersiz mail adresi.
+ *       500:
+ *         description: Sunucu hatası.
+ */
+router.post("/forgotPassword", forgotPassword);
+
+/**
+ * @swagger
+ * /api/auth/resetPassword:
+ *   post:
+ *     summary: Şifre sıfırlama
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: "example@mail.com"
+ *               resetCode:  # Burada 'code' yerine 'resetCode' kullanılmalı
+ *                 type: string
+ *                 example: "abcd1234"
+ *               newPassword:
+ *                 type: string
+ *                 example: "YeniŞifre123!"
+ *     responses:
+ *       200:
+ *         description: Şifreniz başarıyla güncellenmiştir.
+ *       400:
+ *         description: Geçersiz veya süresi dolmuş kod.
+ *       500:
+ *         description: Sunucu hatası.
+ */
+router.post("/resetPassword", resetPassword);
 
 module.exports = router;
