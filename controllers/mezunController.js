@@ -24,8 +24,18 @@ const sendMail = async (to, code, hedefKullaniciAdi) => {
 };
 
 exports.dogrulamaBaslat = async (req, res) => {
-  const { kullaniciId, universiteId, bolumId, dogrulamaMail1, dogrulamaMail2 } =
-    req.body;
+  const { universiteId, bolumId, dogrulamaMail1, dogrulamaMail2 } = req.body;
+
+  const kullaniciId = req.user.kullaniciId; // Auth middleware'den geldiği varsayılıyor
+
+  console.log("dogrulamaBaslat çağrıldı:");
+  console.log("Gelen kullanıcı ID:", kullaniciId);
+  console.log("Body:", {
+    universiteId,
+    bolumId,
+    dogrulamaMail1,
+    dogrulamaMail2,
+  });
 
   const kod1 = Math.floor(100000 + Math.random() * 900000).toString();
   const kod2 = Math.floor(100000 + Math.random() * 900000).toString();

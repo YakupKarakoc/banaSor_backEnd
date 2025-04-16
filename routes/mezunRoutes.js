@@ -1,4 +1,5 @@
 const express = require("express");
+const auth = require("../middleware/authMiddleware");
 const {
   dogrulamaBaslat,
   kodDogrula,
@@ -19,6 +20,8 @@ const router = express.Router();
  *   post:
  *     summary: Mezun olmak isteyen kullanıcı doğrulama sürecini başlatır
  *     tags: [Mezun]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -26,8 +29,6 @@ const router = express.Router();
  *           schema:
  *             type: object
  *             properties:
- *               kullaniciId:
- *                 type: integer
  *               universiteId:
  *                 type: integer
  *               bolumId:
@@ -38,13 +39,20 @@ const router = express.Router();
  *               dogrulamaMail2:
  *                 type: string
  *                 format: email
+ *             required:
+ *               - universiteId
+ *               - bolumId
+ *               - dogrulamaMail1
+ *               - dogrulamaMail2
  *     responses:
  *       201:
  *         description: Kodlar gönderildi
+ *       401:
+ *         description: Yetkilendirme hatası
  *       500:
- *         description: Hata oluştu
+ *         description: Sunucu hatası
  */
-router.post("/dogrulama-baslat", dogrulamaBaslat);
+router.post("/dogrulama-baslat", auth, dogrulamaBaslat);
 
 /**
  * @swagger

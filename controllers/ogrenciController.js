@@ -1,10 +1,15 @@
-const pool = require("../config/db"); // PostgreSQL bağlantısı
+const pool = require("../config/db");
 
-// Öğrenci kaydetme controller fonksiyonu
+// Öğrenci kaydetme controller fonksiyonu (auth ile)
 const ogrenciKaydet = async (req, res) => {
-  const { kullaniciId, universiteId, bolumId } = req.body;
+  const { universiteId, bolumId } = req.body;
+  const kullaniciId = req.user?.kullaniciId; // Auth middleware'den gelen kullanıcı bilgisi
 
   try {
+    if (!kullaniciId) {
+      return res.status(401).json({ error: "Yetkisiz erişim." });
+    }
+
     // 1. Kullanıcı türü kontrolü
     const kullanici = await pool.query(
       `SELECT kullaniciTuruId FROM Kullanici WHERE kullaniciId = $1`,

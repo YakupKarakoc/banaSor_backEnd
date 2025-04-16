@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const auth = require("../middleware/authMiddleware");
 const { ogrenciKaydet } = require("../controllers/ogrenciController");
 
 /**
@@ -9,6 +10,8 @@ const { ogrenciKaydet } = require("../controllers/ogrenciController");
  *     summary: Yeni bir öğrenci kaydı oluşturur
  *     tags:
  *       - Öğrenci
+ *     security:
+ *       - bearerAuth: []  # Auth eklendiğini belirt
  *     requestBody:
  *       required: true
  *       content:
@@ -16,13 +19,9 @@ const { ogrenciKaydet } = require("../controllers/ogrenciController");
  *           schema:
  *             type: object
  *             required:
- *               - kullaniciId
  *               - universiteId
  *               - bolumId
  *             properties:
- *               kullaniciId:
- *                 type: integer
- *                 example: 15
  *               universiteId:
  *                 type: integer
  *                 example: 3
@@ -61,6 +60,6 @@ const { ogrenciKaydet } = require("../controllers/ogrenciController");
  *         description: Sunucu hatası.
  */
 
-router.post("/kayit", ogrenciKaydet);
+router.post("/kayit", auth, ogrenciKaydet);
 
 module.exports = router;
