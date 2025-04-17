@@ -84,9 +84,9 @@ exports.dogrulamaBaslat = async (req, res) => {
   }
 };
 
-// ✅ Kod doğrulama (her referans ayrı şekilde yapar)
-exports.kodDogrula = async (req, res) => {
-  const { kullaniciAdi, girilenKod } = req.body;
+// ✅ Kod doğrulama
+exports.kodlariDogrula = async (req, res) => {
+  const { kullaniciAdi, kod1, kod2 } = req.body;
 
   try {
     const result = await db.query(
@@ -109,19 +109,17 @@ exports.kodDogrula = async (req, res) => {
     const suAn = new Date();
     const bitis = new Date(dogrulama.bitistarihi);
     if (suAn > bitis) {
-      return res.status(400).json({ error: "Kodun süresi dolmuş" });
+      return res.status(400).json({ error: "Kodların süresi dolmuş" });
     }
 
-    // Kodu kontrol et
-    if (girilenKod === dogrulama.kod1) dogrulama1 = true;
-    if (girilenKod === dogrulama.kod2) dogrulama2 = true;
+    if (kod1 === dogrulama.kod1) dogrulama1 = true;
+    if (kod2 === dogrulama.kod2) dogrulama2 = true;
 
     await db.query(
       `UPDATE MezunDogrulama SET dogrulama1 = $1, dogrulama2 = $2 WHERE dogrulamaId = $3`,
       [dogrulama1, dogrulama2, dogrulama.dogrulamaid]
     );
 
-    // Her iki referans onayladıysa mezunluğu onayla
     if (dogrulama1 && dogrulama2) {
       await db.query(
         `UPDATE Mezun SET dogrulamaDurumu = 'Onaylandi' WHERE mezunId = $1`,
@@ -134,13 +132,13 @@ exports.kodDogrula = async (req, res) => {
     }
 
     res.json({
-      message: "Kod kontrol edildi",
+      message: "Kodlar kontrol edildi",
       dogrulama1,
       dogrulama2,
       dogrulandiMi: dogrulama1 && dogrulama2,
     });
   } catch (err) {
-    console.error(err);
+    console.error("Hata:", err);
     res.status(500).json({ error: "Kod doğrulama sırasında hata oluştu" });
   }
 };

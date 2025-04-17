@@ -2,7 +2,7 @@ const express = require("express");
 const auth = require("../middleware/authMiddleware");
 const {
   dogrulamaBaslat,
-  kodDogrula,
+  kodlariDogrula,
 } = require("../controllers/mezunController");
 
 const router = express.Router();
@@ -61,7 +61,7 @@ router.post("/dogrulama-baslat", dogrulamaBaslat);
  * @swagger
  * /api/mezun/kod-dogrula:
  *   post:
- *     summary: Referans kişi kendisine gelen kodu girerek doğrulama yapar
+ *     summary: Referans kişiler kendilerine gelen kodları girerek mezunu doğrular
  *     tags: [Mezun]
  *     requestBody:
  *       required: true
@@ -72,16 +72,41 @@ router.post("/dogrulama-baslat", dogrulamaBaslat);
  *             properties:
  *               kullaniciAdi:
  *                 type: string
- *               girilenKod:
+ *                 example: mehmet123
+ *               kod1:
  *                 type: string
+ *                 example: "123456"
+ *               kod2:
+ *                 type: string
+ *                 example: "789012"
+ *             required:
+ *               - kullaniciAdi
+ *               - kod1
+ *               - kod2
  *     responses:
  *       200:
- *         description: Kod kontrol edildi
+ *         description: Kodlar kontrol edildi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Kodlar kontrol edildi
+ *                 dogrulama1:
+ *                   type: boolean
+ *                 dogrulama2:
+ *                   type: boolean
+ *                 dogrulandiMi:
+ *                   type: boolean
  *       400:
- *         description: Kod süresi dolmuş
+ *         description: Kodların süresi dolmuş
  *       404:
  *         description: Doğrulama kaydı bulunamadı
+ *       500:
+ *         description: Kod doğrulama sırasında hata oluştu
  */
-router.post("/kod-dogrula", kodDogrula);
+router.post("/kod-dogrula", kodlariDogrula);
 
 module.exports = router;
