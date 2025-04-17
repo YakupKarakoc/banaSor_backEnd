@@ -1,32 +1,37 @@
 const pool = require("../config/db");
 
-// Öğrenci kaydetme controller fonksiyonu (auth ile)
-const ogrenciKaydet = async (req, res) => {
-  const { universiteId, bolumId } = req.body;
-  const kullaniciId = req.user?.kullaniciId; // Auth middleware'den gelen kullanıcı bilgisi
+// Email ile öğrenci kaydetme (auth olmadan)
+const ogrenciKaydetEmail = async (req, res) => {
+  const { email, universiteId, bolumId } = req.body;
 
   try {
-    if (!kullaniciId) {
-      return res.status(401).json({ error: "Yetkisiz erişim." });
+    if (!email || !universiteId || !bolumId) {
+      return res
+        .status(400)
+        .json({ error: "Email, üniversite ve bölüm bilgileri gereklidir." });
     }
 
-    // 1. Kullanıcı türü kontrolü
+    // 1. Kullanıcı var mı kontrolü
     const kullanici = await pool.query(
-      `SELECT kullaniciTuruId FROM Kullanici WHERE kullaniciId = $1`,
-      [kullaniciId]
+      `SELECT kullaniciId, kullaniciTuruId FROM Kullanici WHERE email = $1`,
+      [email]
     );
 
     if (kullanici.rowCount === 0) {
-      return res.status(404).json({ error: "Kullanıcı bulunamadı." });
+      return res
+        .status(404)
+        .json({ error: "E-posta adresi ile eşleşen kullanıcı bulunamadı." });
     }
 
-    if (kullanici.rows[0].kullanicituruid !== 2) {
+    const { kullaniciid, kullanicituruid } = kullanici.rows[0];
+
+    if (kullanicituruid !== 2) {
       return res
         .status(403)
-        .json({ error: "Sadece üniversite öğrencileri kayıt yapabilir." });
+        .json({ error: "Sadece üniversite öğrencileri kayıt olabilir." });
     }
 
-    // 2. Bölüm, fakülte ve üniversite aktiflik kontrolü
+    // 2. Bölüm, fakülte ve üniversite aktif mi?
     const bolum = await pool.query(
       `SELECT b.aktifMi AS bolumAktif, f.aktifMi AS fakulteAktif, u.aktifMi AS universiteAktif
        FROM Bolum b
@@ -48,16 +53,16 @@ const ogrenciKaydet = async (req, res) => {
         .json({ error: "Seçilen üniversite, fakülte veya bölüm aktif değil." });
     }
 
-    // 3. Öğrenci daha önce kayıt olmuş mu?
+    // 3. Zaten öğrenci mi?
     const mevcut = await pool.query(
       `SELECT * FROM Ogrenci WHERE kullaniciId = $1`,
-      [kullaniciId]
+      [kullaniciid]
     );
 
     if (mevcut.rowCount > 0) {
       return res
         .status(400)
-        .json({ error: "Kullanıcı zaten öğrenci olarak kayıtlı." });
+        .json({ error: "Bu e-posta ile kayıtlı kullanıcı zaten öğrenci." });
     }
 
     // 4. Kaydet
@@ -65,7 +70,7 @@ const ogrenciKaydet = async (req, res) => {
       `INSERT INTO Ogrenci (kullaniciId, universiteId, bolumId)
        VALUES ($1, $2, $3)
        RETURNING *`,
-      [kullaniciId, universiteId, bolumId]
+      [kullaniciid, universiteId, bolumId]
     );
 
     res.status(201).json({
@@ -79,5 +84,5 @@ const ogrenciKaydet = async (req, res) => {
 };
 
 module.exports = {
-  ogrenciKaydet,
+  ogrenciKaydetEmail,
 };

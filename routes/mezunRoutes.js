@@ -18,10 +18,8 @@ const router = express.Router();
  * @swagger
  * /api/mezun/dogrulama-baslat:
  *   post:
- *     summary: Mezun olmak isteyen kullanıcı doğrulama sürecini başlatır
+ *     summary: Mezun olmak isteyen kullanıcı doğrulama sürecini başlatır (giriş gerektirmez)
  *     tags: [Mezun]
- *     security:
- *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -29,6 +27,9 @@ const router = express.Router();
  *           schema:
  *             type: object
  *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
  *               universiteId:
  *                 type: integer
  *               bolumId:
@@ -40,6 +41,7 @@ const router = express.Router();
  *                 type: string
  *                 format: email
  *             required:
+ *               - email
  *               - universiteId
  *               - bolumId
  *               - dogrulamaMail1
@@ -47,12 +49,13 @@ const router = express.Router();
  *     responses:
  *       201:
  *         description: Kodlar gönderildi
- *       401:
- *         description: Yetkilendirme hatası
+ *       404:
+ *         description: E-posta ile kullanıcı bulunamadı
  *       500:
  *         description: Sunucu hatası
  */
-router.post("/dogrulama-baslat", auth, dogrulamaBaslat);
+
+router.post("/dogrulama-baslat", dogrulamaBaslat);
 
 /**
  * @swagger

@@ -1,17 +1,14 @@
 const express = require("express");
 const router = express.Router();
-const auth = require("../middleware/authMiddleware");
-const { ogrenciKaydet } = require("../controllers/ogrenciController");
+const { ogrenciKaydetEmail } = require("../controllers/ogrenciController");
 
 /**
  * @swagger
  * /api/ogrenci/kayit:
  *   post:
- *     summary: Yeni bir öğrenci kaydı oluşturur
+ *     summary: E-posta ile yeni bir öğrenci kaydı oluşturur (giriş gerekmez)
  *     tags:
  *       - Öğrenci
- *     security:
- *       - bearerAuth: []  # Auth eklendiğini belirt
  *     requestBody:
  *       required: true
  *       content:
@@ -19,9 +16,13 @@ const { ogrenciKaydet } = require("../controllers/ogrenciController");
  *           schema:
  *             type: object
  *             required:
+ *               - email
  *               - universiteId
  *               - bolumId
  *             properties:
+ *               email:
+ *                 type: string
+ *                 example: ornek@student.edu.tr
  *               universiteId:
  *                 type: integer
  *                 example: 3
@@ -51,15 +52,15 @@ const { ogrenciKaydet } = require("../controllers/ogrenciController");
  *                     bolumId:
  *                       type: integer
  *       400:
- *         description: Giriş hatası veya geçersiz veri.
+ *         description: Eksik veya geçersiz veri.
  *       403:
- *         description: Yetkisiz işlem. Sadece üniversite öğrencileri kayıt olabilir.
+ *         description: Sadece üniversite öğrencileri kayıt olabilir.
  *       404:
- *         description: Kullanıcı veya bölüm bulunamadı.
+ *         description: E-posta ile kullanıcı veya bölüm bulunamadı.
  *       500:
  *         description: Sunucu hatası.
  */
 
-router.post("/kayit", auth, ogrenciKaydet);
+router.post("/kayit", ogrenciKaydetEmail);
 
 module.exports = router;

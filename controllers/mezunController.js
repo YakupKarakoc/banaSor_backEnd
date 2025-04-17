@@ -24,12 +24,11 @@ const sendMail = async (to, code, hedefKullaniciAdi) => {
 };
 
 exports.dogrulamaBaslat = async (req, res) => {
-  const { universiteId, bolumId, dogrulamaMail1, dogrulamaMail2 } = req.body;
-
-  const kullaniciId = req.user.kullaniciId; // Auth middleware'den geldiği varsayılıyor
+  const { email, universiteId, bolumId, dogrulamaMail1, dogrulamaMail2 } =
+    req.body;
 
   console.log("dogrulamaBaslat çağrıldı:");
-  console.log("Gelen kullanıcı ID:", kullaniciId);
+  console.log("Gelen email:", email);
   console.log("Body:", {
     universiteId,
     bolumId,
@@ -41,28 +40,38 @@ exports.dogrulamaBaslat = async (req, res) => {
   const kod2 = Math.floor(100000 + Math.random() * 900000).toString();
 
   try {
+    // E-posta ile kullanıcıyı bul
+    const userResult = await db.query(
+      `SELECT kullaniciId, kullaniciAdi FROM Kullanici WHERE email = $1`,
+      [email]
+    );
+
+    if (userResult.rowCount === 0) {
+      return res
+        .status(404)
+        .json({ error: "Bu e-posta ile kayıtlı bir kullanıcı bulunamadı." });
+    }
+
+    const kullaniciId = userResult.rows[0].kullaniciid;
+    const kullaniciAdi = userResult.rows[0].kullaniciadi;
+
     // Mezun kaydını oluştur
     const mezunResult = await db.query(
       `INSERT INTO Mezun (kullaniciId, universiteId, bolumId, dogrulamaMail1, dogrulamaMail2, dogrulamaDurumu)
-         VALUES ($1, $2, $3, $4, $5, 'Bekliyor') RETURNING mezunId`,
+       VALUES ($1, $2, $3, $4, $5, 'Bekliyor') RETURNING mezunId`,
       [kullaniciId, universiteId, bolumId, dogrulamaMail1, dogrulamaMail2]
     );
-    const mezunId = mezunResult.rows[0].mezunid;
 
-    // Kullanıcı adını al
-    const user = await db.query(
-      `SELECT kullaniciAdi FROM Kullanici WHERE kullaniciId = $1`,
-      [kullaniciId]
-    );
-    const kullaniciAdi = user.rows[0].kullaniciadi;
+    const mezunId = mezunResult.rows[0].mezunid;
 
     // MezunDogrulama tablosuna kaydet
     await db.query(
       `INSERT INTO MezunDogrulama (mezunId, kod1, kod2, bitisTarihi)
-         VALUES ($1, $2, $3, (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') + INTERVAL '3 hours 15 minutes')`,
+       VALUES ($1, $2, $3, (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') + INTERVAL '3 hours 15 minutes')`,
       [mezunId, kod1, kod2]
     );
 
+    // Mail gönder
     await sendMail(dogrulamaMail1, kod1, kullaniciAdi);
     await sendMail(dogrulamaMail2, kod2, kullaniciAdi);
 
@@ -70,8 +79,8 @@ exports.dogrulamaBaslat = async (req, res) => {
       message: "Mezun doğrulama süreci başlatıldı ve kodlar gönderildi.",
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "İşlem sırasında hata oluştu." });
+    console.error("doğrulama başlatma hatası:", err);
+    res.status(500).json({ error: "İşlem sırasında sunucu hatası oluştu." });
   }
 };
 
