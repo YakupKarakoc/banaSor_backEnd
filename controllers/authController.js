@@ -44,9 +44,13 @@ exports.login = async (req, res) => {
   try {
     const { email, sifre } = req.body;
 
-    const user = await pool.query("SELECT * FROM Kullanici WHERE email = $1", [
-      email,
-    ]);
+    const user = await pool.query(
+      `SELECT k.*, kt.ad AS kullanicirolu
+       FROM Kullanici k
+       JOIN KullaniciTuru kt ON k.kullaniciTuruId = kt.kullaniciTuruId
+       WHERE k.email = $1`,
+      [email]
+    );
 
     if (user.rows.length === 0) {
       return res.status(400).json({ error: "Geçersiz e-posta veya şifre" });
@@ -63,7 +67,8 @@ exports.login = async (req, res) => {
       { expiresIn: "1h" }
     );
 
-    res.status(200).json({ message: "Giriş başarılı", token });
+    const { sifre: _, ...userInfo } = user.rows[0];
+    res.status(200).json({ message: "Giriş başarılı", token, user: userInfo });
   } catch (error) {
     res.status(500).json({ error: "Sunucu hatası" });
   }
