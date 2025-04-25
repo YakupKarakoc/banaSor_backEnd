@@ -292,33 +292,48 @@ const soruDetayGetir = async (req, res) => {
   }
 };
 
+//Frontend’de kullanıcı aynı butona tekrar basarsa geri çekme (delete), diğerine basarsa değiştirme (update) olacak şekilde entegre edilebilir.
 const tepkiEkleGuncelle = async (req, res) => {
   const kullaniciId = req.user.kullaniciId;
   const { cevapId, tepki } = req.body;
 
-  if (!["Like", "Dislike"].includes(tepki)) {
+  const validTepkiler = ["Like", "Dislike"];
+  if (!validTepkiler.includes(tepki)) {
     return res.status(400).json({ message: "Geçersiz tepki türü" });
   }
 
   try {
     const existing = await pool.query(
-      "SELECT * FROM CevapTepki WHERE cevapId = $1 AND kullaniciId = $2",
+      "SELECT tepki FROM CevapTepki WHERE cevapId = $1 AND kullaniciId = $2",
       [cevapId, kullaniciId]
     );
 
-    if (existing.rows.length > 0) {
-      await pool.query(
-        "UPDATE CevapTepki SET tepki = $1, tarih = CURRENT_TIMESTAMP WHERE cevapId = $2 AND kullaniciId = $3",
-        [tepki, cevapId, kullaniciId]
-      );
-    } else {
+    if (existing.rows.length === 0) {
+      // Durum 1 ve 2
       await pool.query(
         "INSERT INTO CevapTepki (cevapId, kullaniciId, tepki) VALUES ($1, $2, $3)",
         [cevapId, kullaniciId, tepki]
       );
+      return res.json({ message: "Tepki eklendi" });
     }
 
-    res.json({ message: "Tepki kaydedildi" });
+    const mevcutTepki = existing.rows[0].tepki;
+
+    if (mevcutTepki === tepki) {
+      // Durum 4 ve 5
+      await pool.query(
+        "DELETE FROM CevapTepki WHERE cevapId = $1 AND kullaniciId = $2",
+        [cevapId, kullaniciId]
+      );
+      return res.json({ message: "Tepki geri çekildi" });
+    } else {
+      // Durum 6 ve 7
+      await pool.query(
+        "UPDATE CevapTepki SET tepki = $1, tarih = CURRENT_TIMESTAMP WHERE cevapId = $2 AND kullaniciId = $3",
+        [tepki, cevapId, kullaniciId]
+      );
+      return res.json({ message: "Tepki güncellendi" });
+    }
   } catch (err) {
     console.error(err);
     res.status(500).send("Tepki işlemi başarısız");
@@ -337,9 +352,15 @@ const soruBegen = async (req, res) => {
     );
 
     if (existing.rows.length > 0) {
-      return res.status(400).json({ message: "Zaten beğenmişsiniz" });
+      // Beğeni zaten varsa → geri çek
+      await pool.query(
+        "DELETE FROM SoruBegeni WHERE soruId = $1 AND kullaniciId = $2",
+        [soruId, kullaniciId]
+      );
+      return res.json({ message: "Beğeni geri çekildi" });
     }
 
+    // Beğeni yoksa → ekle
     await pool.query(
       "INSERT INTO SoruBegeni (soruId, kullaniciId) VALUES ($1, $2)",
       [soruId, kullaniciId]
@@ -348,7 +369,7 @@ const soruBegen = async (req, res) => {
     res.json({ message: "Soru beğenildi" });
   } catch (err) {
     console.error(err);
-    res.status(500).send("Beğeni eklenemedi");
+    res.status(500).send("Beğeni işlemi başarısız");
   }
 };
 

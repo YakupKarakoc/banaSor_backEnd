@@ -319,23 +319,54 @@ router.get("/detay/:soruId", soruDetayGetir);
  * @swagger
  * /api/soru/cevap/tepki:
  *   post:
- *     summary: Cevaba like/dislike ekle veya güncelle
+ *     summary: Cevaba like/dislike ekle, değiştir veya geri çek
+ *     description:
+ *       - Daha önce tepki yoksa: Like/Dislike ekler.
+ *       - Aynı tepki tekrar gönderilirse: Tepki geri çekilir (silinir).
+ *       - Farklı bir tepki gönderilirse: Önceki tepki güncellenir.
  *     tags: [Tepkiler]
+ *     security:
+ *       - bearerAuth: []  # Eğer JWT kullanıyorsanız
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - cevapId
+ *               - tepki
  *             properties:
  *               cevapId:
  *                 type: integer
+ *                 example: 42
  *               tepki:
  *                 type: string
  *                 enum: [Like, Dislike]
+ *                 example: Like
  *     responses:
  *       200:
- *         description: Tepki kaydedildi
+ *         description: Tepki eklendi, güncellendi veya geri çekildi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Tepki kaydedildi
+ *       400:
+ *         description: Geçersiz tepki türü
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Geçersiz tepki türü
+ *       500:
+ *         description: Sunucu hatası
  */
 router.post("/cevap/tepki", auth, tepkiEkleGuncelle);
 
@@ -343,20 +374,38 @@ router.post("/cevap/tepki", auth, tepkiEkleGuncelle);
  * @swagger
  * /api/soru/begeni:
  *   post:
- *     summary: Soruyu beğen
+ *     summary: Soruyu beğen veya beğeniyi geri çek (toggle)
+ *     description:
+ *       - Eğer kullanıcı daha önce beğenmemişse, beğeni ekler.
+ *       - Daha önce beğenmişse, beğeniyi geri çeker.
  *     tags: [Tepkiler]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - soruId
  *             properties:
  *               soruId:
  *                 type: integer
+ *                 example: 12
  *     responses:
  *       200:
- *         description: Soru beğenildi
+ *         description: Beğeni eklendi veya geri çekildi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Soru beğenildi
+ *       500:
+ *         description: Sunucu hatası
  */
 
 router.post("/begeni", auth, soruBegen);
