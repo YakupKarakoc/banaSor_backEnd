@@ -1,6 +1,7 @@
 const express = require("express");
 const {
   kullaniciSorulariGetir,
+  profilGuncelle,
   kullaniciCevaplariGetir,
 } = require("../controllers/profilController");
 const auth = require("../middleware/authMiddleware");
@@ -96,5 +97,73 @@ router.get("/sorularim", auth, kullaniciSorulariGetir);
  */
 
 router.get("/cevaplarim", auth, kullaniciCevaplariGetir);
+
+/**
+ * @swagger
+ * /api/profil/guncelle:
+ *   put:
+ *     summary: Kullanıcı profilini güncelle (email hariç)
+ *     tags: [Profil]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               ad:
+ *                 type: string
+ *                 example: Ahmet
+ *               soyad:
+ *                 type: string
+ *                 example: Kaya
+ *               sifre:
+ *                 type: string
+ *                 example: yenisifre123
+ *               kullaniciAdi:
+ *                 type: string
+ *                 example: ahmetk
+ *             required:
+ *               - ad
+ *               - soyad
+ *               - sifre
+ *               - kullaniciAdi
+ *     responses:
+ *       200:
+ *         description: Güncelleme başarılı
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 mesaj:
+ *                   type: string
+ *                   example: Güncelleme başarılı
+ *                 kullanici:
+ *                   type: object
+ *                   properties:
+ *                     kullaniciId:
+ *                       type: integer
+ *                       example: 1
+ *                     ad:
+ *                       type: string
+ *                       example: Ahmet
+ *                     soyad:
+ *                       type: string
+ *                       example: Kaya
+ *                     kullaniciAdi:
+ *                       type: string
+ *                       example: ahmetk
+ *       401:
+ *         description: Yetkisiz - Token eksik
+ *       403:
+ *         description: Yetkisiz - Token geçersiz
+ *       500:
+ *         description: Sunucu hatası
+ */
+
+router.put("/guncelle", auth, profilGuncelle);
 
 module.exports = router;

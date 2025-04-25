@@ -1,4 +1,7 @@
 const pool = require("../config/db");
+const bcrypt = require("bcrypt");
+const dotenv = require("dotenv");
+dotenv.config();
 
 const kullaniciSorulariGetir = async (req, res) => {
   const kullaniciId = req.user.kullaniciId;
@@ -66,7 +69,33 @@ const kullaniciCevaplariGetir = async (req, res) => {
   }
 };
 
+const profilGuncelle = async (req, res) => {
+  const kullaniciId = req.user.kullaniciId;
+  const { ad, soyad, sifre, kullaniciAdi } = req.body;
+
+  try {
+    const hashedPassword = await bcrypt.hash(sifre, 10);
+
+    const sonuc = await pool.query(
+      `UPDATE Kullanici SET 
+         ad = $1,
+         soyad = $2,
+         sifre = $3,
+         kullaniciAdi = $4
+       WHERE kullaniciId = $5
+       RETURNING kullaniciId, ad, soyad, kullaniciAdi`,
+      [ad, soyad, hashedPassword, kullaniciAdi, kullaniciId]
+    );
+
+    res.json({ mesaj: "Güncelleme başarılı", kullanici: sonuc.rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ mesaj: "Güncelleme başarısız" });
+  }
+};
+
 module.exports = {
+  profilGuncelle,
   kullaniciSorulariGetir,
   kullaniciCevaplariGetir,
 };
