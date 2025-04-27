@@ -13,6 +13,7 @@ const mezunRoutes = require("../routes/mezunRoutes");
 const takipRoutes = require("../routes/takipRoutes");
 const soruRoutes = require("../routes/soruRoutes");
 const profilRoutes = require("../routes/profilRoutes");
+const forumRoutes = require("../routes/forumRoutes");
 
 dotenv.config();
 
@@ -61,6 +62,7 @@ app.use("/api/mezun", mezunRoutes);
 app.use("/api/takip", takipRoutes);
 app.use("/api/soru", soruRoutes);
 app.use("/api/profil", profilRoutes);
+app.use("/api/forum", forumRoutes);
 
 // Yerelde test için bunu kullan (Vercel deploy yaparken kapat):
 const port = process.env.PORT || 3000;

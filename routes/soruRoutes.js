@@ -319,14 +319,21 @@ router.get("/detay/:soruId", soruDetayGetir);
  * @swagger
  * /api/soru/cevap/tepki:
  *   post:
- *     summary: Cevaba like/dislike ekle, değiştir veya geri çek
- *     description:
- *       - Daha önce tepki yoksa: Like/Dislike ekler.
- *       - Aynı tepki tekrar gönderilirse: Tepki geri çekilir (silinir).
- *       - Farklı bir tepki gönderilirse: Önceki tepki güncellenir.
+ *     summary: Cevaba Like/Dislike ekle, değiştir veya geri çek
+ *     description: |
+ *       - Eğer kullanıcı daha önce tepki vermemişse: Like/Dislike ekler.
+ *       - Aynı tepkiye tekrar basarsa: Tepkiyi geri çeker (silme).
+ *       - Farklı bir tepki verirse: Tepkiyi günceller.
+ *
+ *       **Puan sistemi:**
+ *       - Like eklendiğinde cevap sahibinin puanı +5 artar.
+ *       - Like geri çekildiğinde cevap sahibinin puanı -5 azalır.
+ *       - Dislike puan üzerinde değişiklik yapmaz.
+ *       - Dislike -> Like dönüşümünde puan +5 artar.
+ *       - Like -> Dislike dönüşümünde puan -5 azalır.
  *     tags: [Tepkiler]
  *     security:
- *       - bearerAuth: []  # Eğer JWT kullanıyorsanız
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -339,10 +346,12 @@ router.get("/detay/:soruId", soruDetayGetir);
  *             properties:
  *               cevapId:
  *                 type: integer
+ *                 description: Tepki verilecek cevabın ID'si
  *                 example: 42
  *               tepki:
  *                 type: string
  *                 enum: [Like, Dislike]
+ *                 description: Verilecek tepki türü
  *                 example: Like
  *     responses:
  *       200:
@@ -365,6 +374,16 @@ router.get("/detay/:soruId", soruDetayGetir);
  *                 message:
  *                   type: string
  *                   example: Geçersiz tepki türü
+ *       404:
+ *         description: Cevap bulunamadı
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Cevap bulunamadı
  *       500:
  *         description: Sunucu hatası
  */
@@ -375,9 +394,9 @@ router.post("/cevap/tepki", auth, tepkiEkleGuncelle);
  * /api/soru/begeni:
  *   post:
  *     summary: Soruyu beğen veya beğeniyi geri çek (toggle)
- *     description:
- *       - Eğer kullanıcı daha önce beğenmemişse, beğeni ekler.
- *       - Daha önce beğenmişse, beğeniyi geri çeker.
+ *     description: |
+ *       - Eğer kullanıcı daha önce beğenmemişse, beğeni ekler ve soruyu soran kullanıcının puanını 5 artırır.
+ *       - Eğer kullanıcı daha önce beğenmişse, beğeniyi geri çeker ve soruyu soran kullanıcının puanını 5 azaltır.
  *     tags: [Tepkiler]
  *     security:
  *       - bearerAuth: []
@@ -404,6 +423,8 @@ router.post("/cevap/tepki", auth, tepkiEkleGuncelle);
  *                 message:
  *                   type: string
  *                   example: Soru beğenildi
+ *       401:
+ *         description: Yetkisiz - Token eksik veya geçersiz
  *       500:
  *         description: Sunucu hatası
  */
