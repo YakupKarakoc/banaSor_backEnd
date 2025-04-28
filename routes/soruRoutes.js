@@ -10,6 +10,8 @@ const {
   cevapSil,
   sorulariGetir,
   soruDetayGetir,
+  universiteSoruGetir,
+  bolumSoruGetir,
   tepkiEkleGuncelle,
   soruBegen,
 } = require("../controllers/soruController");
@@ -314,6 +316,106 @@ router.get("/getir", sorulariGetir);
  */
 
 router.get("/detay/:soruId", soruDetayGetir);
+
+/**
+ * @swagger
+ * /api/soru/getir/universite:
+ *   get:
+ *     summary: Üniversiteye göre soruları getirir
+ *     tags: [Sorular]
+ *     description: Belirli bir üniversiteye ait soruları listeler.
+ *     parameters:
+ *       - in: query
+ *         name: universiteId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Soruları listelenecek üniversitenin ID'si
+ *     responses:
+ *       200:
+ *         description: Başarılı bir şekilde sorular listelendi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   soruId:
+ *                     type: integer
+ *                   icerik:
+ *                     type: string
+ *                   olusturmaTarihi:
+ *                     type: string
+ *                     format: date-time
+ *                   kullaniciId:
+ *                     type: integer
+ *                   kullaniciAdi:
+ *                     type: string
+ *                   universiteAd:
+ *                     type: string
+ *                   bolumAd:
+ *                     type: string
+ *                   konuAd:
+ *                     type: string
+ *                   cevapSayisi:
+ *                     type: integer
+ *                   begeniSayisi:
+ *                     type: integer
+ *       500:
+ *         description: Sunucu hatası
+ */
+router.get("/getir/universite", universiteSoruGetir);
+
+/**
+ * @swagger
+ * /api/soru/getir/bolum:
+ *   get:
+ *     summary: Bölüme göre soruları getirir
+ *     tags: [Sorular]
+ *     description: Belirli bir bölüme ait soruları listeler.
+ *     parameters:
+ *       - in: query
+ *         name: bolumId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Soruları listelenecek bölümün ID'si
+ *     responses:
+ *       200:
+ *         description: Başarılı bir şekilde sorular listelendi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   soruId:
+ *                     type: integer
+ *                   icerik:
+ *                     type: string
+ *                   olusturmaTarihi:
+ *                     type: string
+ *                     format: date-time
+ *                   kullaniciId:
+ *                     type: integer
+ *                   kullaniciAdi:
+ *                     type: string
+ *                   universiteAd:
+ *                     type: string
+ *                   bolumAd:
+ *                     type: string
+ *                   konuAd:
+ *                     type: string
+ *                   cevapSayisi:
+ *                     type: integer
+ *                   begeniSayisi:
+ *                     type: integer
+ *       500:
+ *         description: Sunucu hatası
+ */
+router.get("/getir/bolum", bolumSoruGetir);
 
 /**
  * @swagger

@@ -303,6 +303,104 @@ const soruDetayGetir = async (req, res) => {
   }
 };
 
+const universiteSoruGetir = async (req, res) => {
+  const { universiteId } = req.query;
+
+  let query = `
+    SELECT 
+      s.soruId,
+      s.icerik,
+      s.olusturmaTarihi,
+      k.kullaniciId,
+      k.kullaniciAdi AS kullaniciAdi,
+      u.ad AS universiteAd,
+      b.ad AS bolumAd,
+      ko.ad AS konuAd,
+      COUNT(DISTINCT c.cevapId) AS cevapSayisi,
+      COUNT(DISTINCT sb.begeniId) AS begeniSayisi
+    FROM Soru s
+    LEFT JOIN Kullanici k ON s.soranId = k.kullaniciId
+    LEFT JOIN Universite u ON s.universiteId = u.universiteId
+    LEFT JOIN Bolum b ON s.bolumId = b.bolumId
+    LEFT JOIN Konu ko ON s.konuId = ko.konuId
+    LEFT JOIN Cevap c ON s.soruId = c.soruId
+    LEFT JOIN SoruBegeni sb ON s.soruId = sb.soruId
+    WHERE 1=1
+  `;
+
+  const values = [];
+
+  if (universiteId) {
+    values.push(universiteId);
+    query += ` AND s.universiteId = $${values.length}`;
+  }
+
+  query += `
+    GROUP BY 
+      s.soruId, s.icerik, s.olusturmaTarihi,
+      k.kullaniciId, k.kullaniciAdi,
+      u.ad, b.ad, ko.ad
+    ORDER BY s.olusturmaTarihi DESC
+  `;
+
+  try {
+    const result = await pool.query(query, values);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Sorular getirilemedi");
+  }
+};
+
+const bolumSoruGetir = async (req, res) => {
+  const { bolumId } = req.query;
+
+  let query = `
+    SELECT 
+      s.soruId,
+      s.icerik,
+      s.olusturmaTarihi,
+      k.kullaniciId,
+      k.kullaniciAdi AS kullaniciAdi,
+      u.ad AS universiteAd,
+      b.ad AS bolumAd,
+      ko.ad AS konuAd,
+      COUNT(DISTINCT c.cevapId) AS cevapSayisi,
+      COUNT(DISTINCT sb.begeniId) AS begeniSayisi
+    FROM Soru s
+    LEFT JOIN Kullanici k ON s.soranId = k.kullaniciId
+    LEFT JOIN Universite u ON s.universiteId = u.universiteId
+    LEFT JOIN Bolum b ON s.bolumId = b.bolumId
+    LEFT JOIN Konu ko ON s.konuId = ko.konuId
+    LEFT JOIN Cevap c ON s.soruId = c.soruId
+    LEFT JOIN SoruBegeni sb ON s.soruId = sb.soruId
+    WHERE 1=1
+  `;
+
+  const values = [];
+
+  if (bolumId) {
+    values.push(bolumId);
+    query += ` AND s.bolumId = $${values.length}`;
+  }
+
+  query += `
+    GROUP BY 
+      s.soruId, s.icerik, s.olusturmaTarihi,
+      k.kullaniciId, k.kullaniciAdi,
+      u.ad, b.ad, ko.ad
+    ORDER BY s.olusturmaTarihi DESC
+  `;
+
+  try {
+    const result = await pool.query(query, values);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Sorular getirilemedi");
+  }
+};
+
 //Frontend’de kullanıcı aynı butona tekrar basarsa geri çekme (delete), diğerine basarsa değiştirme (update) olacak şekilde entegre edilebilir.
 const tepkiEkleGuncelle = async (req, res) => {
   const kullaniciId = req.user.kullaniciId;
@@ -312,6 +410,11 @@ const tepkiEkleGuncelle = async (req, res) => {
   if (!validTepkiler.includes(tepki)) {
     return res.status(400).json({ message: "Geçersiz tepki türü" });
   }
+
+  // İstanbul saatine göre tarih
+  const istanbulTime = new Date().toLocaleString("en-US", {
+    timeZone: "Europe/Istanbul",
+  });
 
   try {
     // Cevap sahibini bul
@@ -332,8 +435,8 @@ const tepkiEkleGuncelle = async (req, res) => {
     if (existing.rows.length === 0) {
       // İlk kez tepki veriliyor
       await pool.query(
-        "INSERT INTO CevapTepki (cevapId, kullaniciId, tepki) VALUES ($1, $2, $3)",
-        [cevapId, kullaniciId, tepki]
+        "INSERT INTO CevapTepki (cevapId, kullaniciId, tepki, tarih) VALUES ($1, $2, $3, $4)",
+        [cevapId, kullaniciId, tepki, istanbulTime]
       );
 
       if (tepki === "Like") {
@@ -366,18 +469,16 @@ const tepkiEkleGuncelle = async (req, res) => {
     } else {
       // Tepki değiştiriliyor
       await pool.query(
-        "UPDATE CevapTepki SET tepki = $1, tarih = CURRENT_TIMESTAMP WHERE cevapId = $2 AND kullaniciId = $3",
-        [tepki, cevapId, kullaniciId]
+        "UPDATE CevapTepki SET tepki = $1, tarih = $2 WHERE cevapId = $3 AND kullaniciId = $4",
+        [tepki, istanbulTime, cevapId, kullaniciId]
       );
 
       if (mevcutTepki === "Like" && tepki === "Dislike") {
-        // Like -> Dislike dönüşü: puanı -5 azalt
         await pool.query(
           "UPDATE Kullanici SET puan = puan - 5 WHERE kullaniciId = $1",
           [cevapSahibiId]
         );
       } else if (mevcutTepki === "Dislike" && tepki === "Like") {
-        // Dislike -> Like dönüşü: puanı +5 artır
         await pool.query(
           "UPDATE Kullanici SET puan = puan + 5 WHERE kullaniciId = $1",
           [cevapSahibiId]
@@ -392,10 +493,14 @@ const tepkiEkleGuncelle = async (req, res) => {
   }
 };
 
-// SORU BEĞENİ
+// Soru beğenme işlemi
+// Kullanıcı bir soruyu beğendiğinde veya beğenisini geri çektiğinde bu fonksiyon çağrılır
 const soruBegen = async (req, res) => {
   const kullaniciId = req.user.kullaniciId;
   const { soruId } = req.body;
+  const istanbulTime = new Date().toLocaleString("en-US", {
+    timeZone: "Europe/Istanbul",
+  });
 
   try {
     const existing = await pool.query(
@@ -403,7 +508,6 @@ const soruBegen = async (req, res) => {
       [soruId, kullaniciId]
     );
 
-    // Soruyu soran kullanıcıyı bul
     const soru = await pool.query(
       "SELECT soranId FROM Soru WHERE soruId = $1",
       [soruId]
@@ -416,13 +520,11 @@ const soruBegen = async (req, res) => {
     const soranId = soru.rows[0].soranid;
 
     if (existing.rows.length > 0) {
-      // Beğeni zaten varsa → geri çek
       await pool.query(
         "DELETE FROM SoruBegeni WHERE soruId = $1 AND kullaniciId = $2",
         [soruId, kullaniciId]
       );
 
-      // PUAN -5 (eğer geri çekilirse)
       await pool.query(
         "UPDATE Kullanici SET puan = GREATEST(puan - 5, 0) WHERE kullaniciId = $1",
         [soranId]
@@ -431,13 +533,12 @@ const soruBegen = async (req, res) => {
       return res.json({ message: "Beğeni geri çekildi" });
     }
 
-    // Beğeni yoksa → ekle
+    // Burada tarih bilgisini ekliyoruz
     await pool.query(
-      "INSERT INTO SoruBegeni (soruId, kullaniciId) VALUES ($1, $2)",
-      [soruId, kullaniciId]
+      "INSERT INTO SoruBegeni (soruId, kullaniciId, tarih) VALUES ($1, $2, $3)",
+      [soruId, kullaniciId, istanbulTime]
     );
 
-    // PUAN +5 (yeni beğeni verildiğinde)
     await pool.query(
       "UPDATE Kullanici SET puan = puan + 5 WHERE kullaniciId = $1",
       [soranId]
@@ -460,6 +561,8 @@ module.exports = {
   cevapSil,
   sorulariGetir,
   soruDetayGetir,
+  universiteSoruGetir,
+  bolumSoruGetir,
   tepkiEkleGuncelle,
   soruBegen,
 };

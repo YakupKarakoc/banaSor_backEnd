@@ -132,16 +132,27 @@ exports.verifyCode = async (req, res) => {
         .json({ error: "Kod geçersiz veya süresi dolmuş." });
     }
 
-    // Kullanıcıyı doğrulama işlemi
+    // İşlem başarılıysa: hem KullaniciDogrulama tablosunda dogrulandiMi'yi true yap hem de Kullanici tablosunda onaylandiMi'yi true yap
     await pool.query(
-      `UPDATE KullaniciDogrulama SET dogrulandiMi = true WHERE dogrulamaId = $1`,
+      `UPDATE KullaniciDogrulama 
+       SET dogrulandiMi = true, onaylamaTarihi = NOW()
+       WHERE dogrulamaId = $1`,
       [result.rows[0].dogrulamaid]
     );
 
-    res.status(200).json({ message: "E-posta başarıyla doğrulandı." });
+    await pool.query(
+      `UPDATE Kullanici 
+       SET onaylandiMi = true 
+       WHERE kullaniciId = $1`,
+      [kullaniciId]
+    );
+
+    res
+      .status(200)
+      .json({ message: "Kullanıcı başarıyla doğrulandı ve onaylandı." });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Sunucu hatası" });
+    console.error("Doğrulama hatası:", error);
+    res.status(500).json({ error: "Sunucu hatası." });
   }
 };
 
