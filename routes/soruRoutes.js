@@ -11,6 +11,7 @@ const {
   sorulariGetir,
   soruDetayGetir,
   universiteSoruGetir,
+  fakulteSoruGetir,
   bolumSoruGetir,
   tepkiEkleGuncelle,
   soruBegen,
@@ -416,6 +417,29 @@ router.get("/getir/universite", universiteSoruGetir);
  *         description: Sunucu hatası
  */
 router.get("/getir/bolum", bolumSoruGetir);
+
+/**
+ * @swagger
+ * /api/soru/getir/fakulte:
+ *   get:
+ *     summary: Belirli bir fakülteye ait tüm bölümlerdeki soruları getir
+ *     tags: [Sorular]
+ *     parameters:
+ *       - in: query
+ *         name: fakulteId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Fakülte ID
+ *     responses:
+ *       200:
+ *         description: Sorular başarıyla listelendi
+ *       400:
+ *         description: fakulteId zorunludur
+ *       500:
+ *         description: Sunucu hatası
+ */
+router.get("/getir/fakulte", fakulteSoruGetir);
 
 /**
  * @swagger

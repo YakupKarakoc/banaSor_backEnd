@@ -352,6 +352,51 @@ const universiteSoruGetir = async (req, res) => {
   }
 };
 
+const fakulteSoruGetir = async (req, res) => {
+  const { fakulteId } = req.query;
+
+  if (!fakulteId) {
+    return res.status(400).json({ message: "fakulteId zorunludur" });
+  }
+
+  const query = `
+    SELECT 
+      s.soruId,
+      s.icerik,
+      s.olusturmaTarihi,
+      k.kullaniciId,
+      k.kullaniciAdi AS kullaniciAdi,
+      u.ad AS universiteAd,
+      b.ad AS bolumAd,
+      f.ad AS fakulteAd,
+      ko.ad AS konuAd,
+      COUNT(DISTINCT c.cevapId) AS cevapSayisi,
+      COUNT(DISTINCT sb.begeniId) AS begeniSayisi
+    FROM Soru s
+    LEFT JOIN Kullanici k ON s.soranId = k.kullaniciId
+    LEFT JOIN Universite u ON s.universiteId = u.universiteId
+    LEFT JOIN Bolum b ON s.bolumId = b.bolumId
+    LEFT JOIN Fakulte f ON b.fakulteId = f.fakulteId
+    LEFT JOIN Konu ko ON s.konuId = ko.konuId
+    LEFT JOIN Cevap c ON s.soruId = c.soruId
+    LEFT JOIN SoruBegeni sb ON s.soruId = sb.soruId
+    WHERE f.fakulteId = $1
+    GROUP BY 
+      s.soruId, s.icerik, s.olusturmaTarihi,
+      k.kullaniciId, k.kullaniciAdi,
+      u.ad, b.ad, f.ad, ko.ad
+    ORDER BY s.olusturmaTarihi DESC
+  `;
+
+  try {
+    const result = await pool.query(query, [fakulteId]);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Fakülteye ait sorular getirilemedi");
+  }
+};
+
 const bolumSoruGetir = async (req, res) => {
   const { bolumId } = req.query;
 
@@ -562,6 +607,7 @@ module.exports = {
   sorulariGetir,
   soruDetayGetir,
   universiteSoruGetir,
+  fakulteSoruGetir,
   bolumSoruGetir,
   tepkiEkleGuncelle,
   soruBegen,
