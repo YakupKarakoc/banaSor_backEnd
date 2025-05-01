@@ -8,6 +8,8 @@ const {
   entryEkle,
   entryGuncelle,
   entrySil,
+  forumlariGetir,
+  universiteForumGetir,
 } = require("../controllers/forumController");
 
 /**
@@ -235,5 +237,99 @@ router.patch("/entryGuncelle", auth, entryGuncelle);
  *         description: Yetkisiz işlem
  */
 router.delete("/entrySil", auth, entrySil);
+
+/**
+ * @swagger
+ * /api/forum/getir:
+ *   get:
+ *     summary: Forumları listele
+ *     description: Forumları listeler. İstenirse üniversiteId'ye göre filtrelenebilir. Her forum için entry sayısı, başlığı açan kullanıcının adı ve üniversite adı da döner.
+ *     tags:
+ *       - Forum
+ *     parameters:
+ *       - in: query
+ *         name: universiteId
+ *         required: false
+ *         description: Filtrelemek istenilen Üniversite ID'si
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Forumlar başarıyla listelendi.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   forumId:
+ *                     type: integer
+ *                   baslik:
+ *                     type: string
+ *                   olusturanKullaniciAdi:
+ *                     type: string
+ *                   universiteAdi:
+ *                     type: string
+ *                   olusturmaTarihi:
+ *                     type: string
+ *                     format: date-time
+ *                   entrySayisi:
+ *                     type: integer
+ *       500:
+ *         description: Forumlar getirilemedi.
+ */
+router.get("/getir", forumlariGetir);
+
+/**
+ * @swagger
+ * /api/forum/getir/universite:
+ *   get:
+ *     summary: Forumları getirir
+ *     description: Tüm forumları veya verilen üniversiteId'ye göre filtrelenmiş forumları listeler. Her forum için başlığı açan kullanıcının adı, üniversite adı ve entry sayısı döner.
+ *     tags:
+ *       - Forum
+ *     parameters:
+ *       - in: query
+ *         name: universiteId
+ *         schema:
+ *           type: integer
+ *         description: Filtrelemek için üniversite ID'si (opsiyonel)
+ *     responses:
+ *       200:
+ *         description: Forumlar başarıyla getirildi.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   forumId:
+ *                     type: integer
+ *                     description: Forum ID
+ *                   baslik:
+ *                     type: string
+ *                     description: Forum başlığı
+ *                   olusturmaTarihi:
+ *                     type: string
+ *                     format: date-time
+ *                     description: Forum oluşturulma tarihi (İstanbul saati)
+ *                   kullaniciId:
+ *                     type: integer
+ *                     description: Forum başlığını açan kullanıcının ID'si
+ *                   kullaniciAdi:
+ *                     type: string
+ *                     description: Forum başlığını açan kullanıcının kullanıcı adı
+ *                   universiteAd:
+ *                     type: string
+ *                     description: Forumun bağlı olduğu üniversite adı
+ *                   entrySayisi:
+ *                     type: integer
+ *                     description: Forumda yazılan entry sayısı
+ *       500:
+ *         description: Forumlar getirilemedi.
+ */
+router.get("/getir/universite", universiteForumGetir);
 
 module.exports = router;

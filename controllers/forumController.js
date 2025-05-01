@@ -159,6 +159,81 @@ const entrySil = async (req, res) => {
   }
 };
 
+const forumlariGetir = async (req, res) => {
+  const { universiteId } = req.query; // Filtreleme için query parametre kullanıyoruz
+
+  try {
+    let query = `SELECT 
+  forumId,
+  baslik,
+  k.kullaniciAdi AS "olusturanKullaniciAdi",
+  u.ad AS "universiteAdi",
+  (SELECT COUNT(*) FROM Entry e WHERE e.forumId = f.forumId) AS "entrySayisi",
+  (f.olusturmaTarihi AT TIME ZONE 'UTC' AT TIME ZONE 'Europe/Istanbul') AS "olusturmaTarihi"
+FROM Forum f
+JOIN Kullanici k ON f.olusturanId = k.kullaniciId
+JOIN Universite u ON f.universiteId = u.universiteId
+`;
+
+    const params = [];
+
+    if (universiteId) {
+      query += ` WHERE f.universiteId = $1 `;
+      params.push(universiteId);
+    }
+
+    query += `
+      GROUP BY f.forumId, f.baslik, k.kullaniciAdi, u.ad, f.olusturmaTarihi
+      ORDER BY f.olusturmaTarihi DESC
+    `;
+
+    const result = await pool.query(query, params);
+
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Forumlar getirilemedi");
+  }
+};
+
+const universiteForumGetir = async (req, res) => {
+  const { universiteId } = req.query;
+
+  // universiteId zorunlu hale getirildi
+  if (!universiteId) {
+    return res.status(400).send("Üniversite ID gereklidir.");
+  }
+
+  const query = `
+    SELECT 
+      f.forumId,
+      f.baslik,
+      (f.olusturmaTarihi AT TIME ZONE 'UTC' AT TIME ZONE 'Europe/Istanbul') AS "olusturmaTarihi",
+      k.kullaniciId,
+      k.kullaniciAdi AS "kullaniciAdi",
+      u.ad AS "universiteAd",
+      COUNT(DISTINCT e.entryId) AS "entrySayisi"
+    FROM Forum f
+    LEFT JOIN Kullanici k ON f.olusturanId = k.kullaniciId
+    LEFT JOIN Universite u ON f.universiteId = u.universiteId
+    LEFT JOIN Entry e ON f.forumId = e.forumId
+    WHERE f.universiteId = $1
+    GROUP BY 
+      f.forumId, f.baslik, f.olusturmaTarihi,
+      k.kullaniciId, k.kullaniciAdi,
+      u.ad
+    ORDER BY f.olusturmaTarihi DESC
+  `;
+
+  try {
+    const result = await pool.query(query, [universiteId]);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Forumlar getirilemedi");
+  }
+};
+
 module.exports = {
   forumEkle,
   forumGuncelle,
@@ -166,4 +241,6 @@ module.exports = {
   entryEkle,
   entryGuncelle,
   entrySil,
+  forumlariGetir,
+  universiteForumGetir,
 };

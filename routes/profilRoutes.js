@@ -3,6 +3,8 @@ const {
   kullaniciSorulariGetir,
   profilGuncelle,
   kullaniciCevaplariGetir,
+  kullaniciForumlariGetir,
+  kullaniciEntryleriGetir,
 } = require("../controllers/profilController");
 const auth = require("../middleware/authMiddleware");
 
@@ -97,6 +99,96 @@ router.get("/sorularim", auth, kullaniciSorulariGetir);
  */
 
 router.get("/cevaplarim", auth, kullaniciCevaplariGetir);
+
+/**
+ * @swagger
+ * /api/profil/forumlarim:
+ *   get:
+ *     summary: Giriş yapan kullanıcının oluşturduğu forum başlıklarını getirir
+ *     tags:
+ *       - Profil
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Kullanıcının oluşturduğu forumlar başarıyla getirildi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   forumId:
+ *                     type: integer
+ *                     example: 1
+ *                   baslik:
+ *                     type: string
+ *                     example: Bilgisayar Mühendisliği hakkında ne düşünüyorsunuz?
+ *                   olusturmaTarihi:
+ *                     type: string
+ *                     format: date-time
+ *                     example: 2025-04-28T09:15:00.000Z
+ *                   universiteAd:
+ *                     type: string
+ *                     example: İstanbul Teknik Üniversitesi
+ *                   entrySayisi:
+ *                     type: integer
+ *                     example: 3
+ *       401:
+ *         description: Yetkisiz - Geçerli bir token gerekli
+ *       500:
+ *         description: Sunucu hatası
+ */
+router.get("/forumlarim", auth, kullaniciForumlariGetir);
+
+/**
+ * @swagger
+ * /api/profil/entrylerim:
+ *   get:
+ *     summary: Giriş yapan kullanıcının yazdığı entry'leri getirir
+ *     tags:
+ *       - Profil
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Kullanıcının entry'leri başarıyla getirildi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   entryId:
+ *                     type: integer
+ *                     example: 5
+ *                   forumId:
+ *                     type: integer
+ *                     example: 2
+ *                   forumBaslik:
+ *                     type: string
+ *                     example: Yazılım Mühendisliği 1. sınıf önerileriniz
+ *                   icerik:
+ *                     type: string
+ *                     example: Bence ilk yıl algoritma temeli çok önemli.
+ *                   olusturmaTarihi:
+ *                     type: string
+ *                     format: date-time
+ *                     example: 2025-04-28T11:05:00.000Z
+ *                   likeSayisi:
+ *                     type: integer
+ *                     example: 10
+ *                   dislikeSayisi:
+ *                     type: integer
+ *                     example: 2
+ *       401:
+ *         description: Yetkisiz - Geçerli bir token gerekli
+ *       500:
+ *         description: Sunucu hatası
+ */
+router.get("/entrylerim", auth, kullaniciEntryleriGetir);
 
 /**
  * @swagger

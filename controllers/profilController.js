@@ -69,6 +69,62 @@ const kullaniciCevaplariGetir = async (req, res) => {
   }
 };
 
+const kullaniciForumlariGetir = async (req, res) => {
+  const kullaniciId = req.user.kullaniciId; // JWT'den gelen kullanıcı ID
+
+  const query = `
+    SELECT 
+      f.forumId,
+      f.baslik,
+      f.olusturmaTarihi,
+      u.ad AS universiteAd,
+      COUNT(e.entryId) AS entrySayisi
+    FROM Forum f
+    LEFT JOIN Universite u ON f.universiteId = u.universiteId
+    LEFT JOIN Entry e ON f.forumId = e.forumId
+    WHERE f.olusturanId = $1
+    GROUP BY f.forumId, f.baslik, f.olusturmaTarihi, u.ad
+    ORDER BY f.olusturmaTarihi DESC
+  `;
+
+  try {
+    const result = await pool.query(query, [kullaniciId]);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Forumlar getirilemedi:", err);
+    res.status(500).send("Forumlar getirilemedi");
+  }
+};
+
+const kullaniciEntryleriGetir = async (req, res) => {
+  const kullaniciId = req.user.kullaniciId;
+
+  const query = `
+    SELECT 
+      e.entryId,
+      e.forumId,
+      f.baslik AS forumBaslik,
+      e.icerik,
+      e.olusturmaTarihi,
+      COUNT(CASE WHEN et.tepki = 'Like' THEN 1 END) AS likeSayisi,
+      COUNT(CASE WHEN et.tepki = 'Dislike' THEN 1 END) AS dislikeSayisi
+    FROM Entry e
+    INNER JOIN Forum f ON e.forumId = f.forumId
+    LEFT JOIN EntryTepki et ON e.entryId = et.entryId
+    WHERE e.kullaniciId = $1
+    GROUP BY e.entryId, f.baslik, e.forumId, e.icerik, e.olusturmaTarihi
+    ORDER BY e.olusturmaTarihi DESC
+  `;
+
+  try {
+    const result = await pool.query(query, [kullaniciId]);
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error("Entryler alınırken hata:", err);
+    res.status(500).send("Kullanıcının entry'leri getirilemedi.");
+  }
+};
+
 const profilGuncelle = async (req, res) => {
   const kullaniciId = req.user.kullaniciId;
   const { ad, soyad, sifre, kullaniciAdi } = req.body;
@@ -97,5 +153,7 @@ const profilGuncelle = async (req, res) => {
 module.exports = {
   profilGuncelle,
   kullaniciSorulariGetir,
+  kullaniciForumlariGetir,
+  kullaniciEntryleriGetir,
   kullaniciCevaplariGetir,
 };
