@@ -5,6 +5,7 @@ const {
   kullaniciCevaplariGetir,
   kullaniciForumlariGetir,
   kullaniciEntryleriGetir,
+  begenilenSorulariGetir,
 } = require("../controllers/profilController");
 const auth = require("../middleware/authMiddleware");
 
@@ -190,6 +191,21 @@ router.get("/forumlarim", auth, kullaniciForumlariGetir);
  */
 router.get("/entrylerim", auth, kullaniciEntryleriGetir);
 
+/**
+ * @swagger
+ * /api/profil/soru/begenilenler:
+ *   get:
+ *     summary: Giriş yapan kullanıcının beğendiği soruları getirir
+ *     tags: [Profil]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Beğenilen sorular başarıyla getirildi
+ *       500:
+ *         description: Sunucu hatası
+ */
+router.get("/soru/begenilenler", auth, begenilenSorulariGetir);
 /**
  * @swagger
  * /api/profil/guncelle:
