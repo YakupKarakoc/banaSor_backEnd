@@ -159,6 +159,77 @@ const entrySil = async (req, res) => {
   }
 };
 
+const forumDetayGetir = async (req, res) => {
+  const { forumId } = req.params;
+
+  const query = `
+    SELECT 
+      f.forumId,
+      f.baslik,
+      f.olusturmaTarihi,
+      ku.kullaniciAdi AS olusturanKullaniciAdi,
+      u.ad AS universite,
+
+      e.entryId,
+      e.icerik AS entryIcerik,
+      e.olusturmaTarihi AS entryTarihi,
+      ke.kullaniciAdi AS entryKullaniciAdi,
+
+      COALESCE(SUM(CASE WHEN et.tepki = 'Like' THEN 1 ELSE 0 END), 0) AS likeSayisi,
+      COALESCE(SUM(CASE WHEN et.tepki = 'Dislike' THEN 1 ELSE 0 END), 0) AS dislikeSayisi
+
+    FROM Forum f
+    LEFT JOIN Kullanici ku ON f.olusturanId = ku.kullaniciId
+    LEFT JOIN Universite u ON f.universiteId = u.universiteId
+    LEFT JOIN Entry e ON f.forumId = e.forumId
+    LEFT JOIN Kullanici ke ON e.kullaniciId = ke.kullaniciId
+    LEFT JOIN EntryTepki et ON e.entryId = et.entryId
+
+    WHERE f.forumId = $1
+
+    GROUP BY 
+      f.forumId, f.baslik, f.olusturmaTarihi,
+      ku.kullaniciAdi, u.ad,
+      e.entryId, e.icerik, e.olusturmaTarihi, ke.kullaniciAdi
+
+    ORDER BY e.olusturmaTarihi ASC
+  `;
+
+  try {
+    const result = await pool.query(query, [forumId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Forum bulunamadı" });
+    }
+
+    const ilk = result.rows[0];
+
+    const response = {
+      forumId: ilk.forumid,
+      baslik: ilk.baslik,
+      olusturmaTarihi: ilk.olusturmatarihi,
+      olusturanKullaniciAdi: ilk.olusturankullaniciadi,
+      universite: ilk.universite,
+      entrySayisi: result.rows.filter((row) => row.entryid !== null).length,
+      entryler: result.rows
+        .filter((row) => row.entryid !== null)
+        .map((row) => ({
+          entryId: row.entryid,
+          icerik: row.entryicerik,
+          olusturmaTarihi: row.entrytarihi,
+          kullaniciAdi: row.entrykullaniciadi,
+          likeSayisi: parseInt(row.likesayisi, 10),
+          dislikeSayisi: parseInt(row.dislikesayisi, 10),
+        })),
+    };
+
+    res.json(response);
+  } catch (err) {
+    console.error("Forum detayları alınırken hata:", err);
+    res.status(500).send("Forum detayları getirilemedi.");
+  }
+};
+
 const forumlariGetir = async (req, res) => {
   const { universiteId } = req.query; // Filtreleme için query parametre kullanıyoruz
 
@@ -234,6 +305,97 @@ const universiteForumGetir = async (req, res) => {
   }
 };
 
+const entryTepkiEkleGuncelle = async (req, res) => {
+  const kullaniciId = req.user.kullaniciId;
+  const { entryId, tepki } = req.body;
+
+  const validTepkiler = ["Like", "Dislike"];
+  if (!validTepkiler.includes(tepki)) {
+    return res.status(400).json({ message: "Geçersiz tepki türü" });
+  }
+
+  // İstanbul saatine göre tarih
+  const istanbulTime = new Date().toLocaleString("en-US", {
+    timeZone: "Europe/Istanbul",
+  });
+
+  try {
+    // Entry sahibini bul
+    const entrySahibiQuery = await pool.query(
+      "SELECT kullaniciId FROM Entry WHERE entryId = $1",
+      [entryId]
+    );
+    if (entrySahibiQuery.rows.length === 0) {
+      return res.status(404).json({ message: "Entry bulunamadı" });
+    }
+    const entrySahibiId = entrySahibiQuery.rows[0].kullaniciid;
+
+    const existing = await pool.query(
+      "SELECT tepki FROM EntryTepki WHERE entryId = $1 AND kullaniciId = $2",
+      [entryId, kullaniciId]
+    );
+
+    if (existing.rows.length === 0) {
+      // İlk kez tepki veriliyor
+      await pool.query(
+        "INSERT INTO EntryTepki (entryId, kullaniciId, tepki, tarih) VALUES ($1, $2, $3, $4)",
+        [entryId, kullaniciId, tepki, istanbulTime]
+      );
+
+      if (tepki === "Like") {
+        await pool.query(
+          "UPDATE Kullanici SET puan = puan + 5 WHERE kullaniciId = $1",
+          [entrySahibiId]
+        );
+      }
+
+      return res.json({ message: "Tepki eklendi" });
+    }
+
+    const mevcutTepki = existing.rows[0].tepki;
+
+    if (mevcutTepki === tepki) {
+      // Aynı tepkiye tekrar basıldı → geri çek
+      await pool.query(
+        "DELETE FROM EntryTepki WHERE entryId = $1 AND kullaniciId = $2",
+        [entryId, kullaniciId]
+      );
+
+      if (tepki === "Like") {
+        await pool.query(
+          "UPDATE Kullanici SET puan = puan - 5 WHERE kullaniciId = $1",
+          [entrySahibiId]
+        );
+      }
+
+      return res.json({ message: "Tepki geri çekildi" });
+    } else {
+      // Tepki değiştiriliyor
+      await pool.query(
+        "UPDATE EntryTepki SET tepki = $1, tarih = $2 WHERE entryId = $3 AND kullaniciId = $4",
+        [tepki, istanbulTime, entryId, kullaniciId]
+      );
+
+      if (mevcutTepki === "Like" && tepki === "Dislike") {
+        await pool.query(
+          "UPDATE Kullanici SET puan = puan - 5 WHERE kullaniciId = $1",
+          [entrySahibiId]
+        );
+      } else if (mevcutTepki === "Dislike" && tepki === "Like") {
+        await pool.query(
+          "UPDATE Kullanici SET puan = puan + 5 WHERE kullaniciId = $1",
+          [entrySahibiId]
+        );
+      }
+
+      return res.json({ message: "Tepki güncellendi" });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Tepki işlemi başarısız");
+  }
+};
+
 module.exports = {
   forumEkle,
   forumGuncelle,
@@ -241,6 +403,8 @@ module.exports = {
   entryEkle,
   entryGuncelle,
   entrySil,
+  forumDetayGetir,
   forumlariGetir,
   universiteForumGetir,
+  entryTepkiEkleGuncelle,
 };

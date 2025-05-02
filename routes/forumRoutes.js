@@ -9,7 +9,9 @@ const {
   entryGuncelle,
   entrySil,
   forumlariGetir,
+  forumDetayGetir,
   universiteForumGetir,
+  entryTepkiEkleGuncelle,
 } = require("../controllers/forumController");
 
 /**
@@ -240,6 +242,78 @@ router.delete("/entrySil", auth, entrySil);
 
 /**
  * @swagger
+ * /api/forum/detay/{forumId}:
+ *   get:
+ *     summary: Belirli bir foruma ait detayları ve yazılan entry'leri getirir
+ *     tags:
+ *       - Forum
+ *     parameters:
+ *       - in: path
+ *         name: forumId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Detayları alınacak forumun ID'si
+ *     responses:
+ *       200:
+ *         description: Forum detayları ve entry'ler başarıyla getirildi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 forumId:
+ *                   type: integer
+ *                   example: 3
+ *                 baslik:
+ *                   type: string
+ *                   example: Bilgisayar mühendisliği 1. sınıf kitap önerisi
+ *                 olusturmaTarihi:
+ *                   type: string
+ *                   format: date-time
+ *                   example: 2025-04-28T12:00:00.000Z
+ *                 olusturanKullaniciAdi:
+ *                   type: string
+ *                   example: yazilimci_ahmet
+ *                 universite:
+ *                   type: string
+ *                   example: Boğaziçi Üniversitesi
+ *                 entrySayisi:
+ *                   type: integer
+ *                   example: 5
+ *                 entryler:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       entryId:
+ *                         type: integer
+ *                         example: 101
+ *                       icerik:
+ *                         type: string
+ *                         example: Veri yapıları dersi için Cormen kitabını öneririm.
+ *                       olusturmaTarihi:
+ *                         type: string
+ *                         format: date-time
+ *                         example: 2025-04-28T12:45:00.000Z
+ *                       kullaniciAdi:
+ *                         type: string
+ *                         example: ali_dev
+ *                       likeSayisi:
+ *                         type: integer
+ *                         example: 8
+ *                       dislikeSayisi:
+ *                         type: integer
+ *                         example: 2
+ *       404:
+ *         description: Forum bulunamadı
+ *       500:
+ *         description: Sunucu hatası
+ */
+router.get("/detay/:forumId", forumDetayGetir);
+
+/**
+ * @swagger
  * /api/forum/getir:
  *   get:
  *     summary: Forumları listele
@@ -331,5 +405,79 @@ router.get("/getir", forumlariGetir);
  *         description: Forumlar getirilemedi.
  */
 router.get("/getir/universite", universiteForumGetir);
+
+/**
+ * @swagger
+ * /api/forum/entry/tepki:
+ *   post:
+ *     summary: Entry'e Like/Dislike ekle, değiştir veya geri çek
+ *     description: |
+ *       - Eğer kullanıcı daha önce tepki vermemişse: Like/Dislike ekler.
+ *       - Aynı tepkiye tekrar basarsa: Tepkiyi geri çeker (silme).
+ *       - Farklı bir tepki verirse: Tepkiyi günceller.
+ *
+ *       **Puan sistemi:**
+ *       - Like eklendiğinde entry sahibinin puanı +2 artar.
+ *       - Like geri çekildiğinde entry sahibinin puanı -2 azalır.
+ *       - Dislike puan üzerinde değişiklik yapmaz.
+ *       - Dislike -> Like dönüşümünde puan +2 artar.
+ *       - Like -> Dislike dönüşümünde puan -2 azalır.
+ *     tags: [Tepkiler]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - entryId
+ *               - tepki
+ *             properties:
+ *               entryId:
+ *                 type: integer
+ *                 description: Tepki verilecek entry'nin ID'si
+ *                 example: 27
+ *               tepki:
+ *                 type: string
+ *                 enum: [Like, Dislike]
+ *                 description: Verilecek tepki türü
+ *                 example: Like
+ *     responses:
+ *       200:
+ *         description: Tepki eklendi, güncellendi veya geri çekildi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Tepki kaydedildi
+ *       400:
+ *         description: Geçersiz tepki türü
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Geçersiz tepki türü
+ *       404:
+ *         description: Entry bulunamadı
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Entry bulunamadı
+ *       500:
+ *         description: Sunucu hatası
+ */
+router.post("/entry/tepki", auth, entryTepkiEkleGuncelle);
 
 module.exports = router;
