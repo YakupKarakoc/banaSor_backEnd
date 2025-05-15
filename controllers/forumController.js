@@ -2,24 +2,37 @@ const pool = require("../config/db");
 
 const forumEkle = async (req, res) => {
   const { baslik, universiteId } = req.body;
-  const olusturanId = req.user.kullaniciId; // Kullanıcı ID'si, JWT'den alınır
+  const olusturanId = req.user.kullaniciId;
 
   const istanbulTime = new Date().toLocaleString("en-US", {
     timeZone: "Europe/Istanbul",
   });
 
   try {
+    // Kullanıcının aktif olup olmadığını kontrol et
+    const kullanici = await pool.query(
+      "SELECT * FROM Kullanici WHERE kullaniciId = $1 AND aktifMi = true",
+      [olusturanId]
+    );
+
+    if (kullanici.rows.length === 0) {
+      return res
+        .status(403)
+        .json({ message: "Aktif olmayan kullanıcılar işlem yapamaz" });
+    }
+
+    // Forum ekleme işlemi
     const result = await pool.query(
       `INSERT INTO Forum (olusturanId, baslik, universiteId, olusturmaTarihi)
          VALUES ($1, $2, $3, $4) 
-         RETURNING *`, // Forum bilgilerini döndürüyoruz
+         RETURNING *`,
       [olusturanId, baslik, universiteId, istanbulTime]
     );
 
-    res.status(201).json(result.rows[0]); // Forum detaylarını döndürüyoruz
+    res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error(err);
-    res.status(500).send("Forum oluşturulamadı"); // Hata mesajı
+    res.status(500).send("Forum oluşturulamadı");
   }
 };
 
@@ -28,6 +41,18 @@ const forumGuncelle = async (req, res) => {
   const kullaniciId = req.user.kullaniciId;
 
   try {
+    // Kullanıcının aktif olup olmadığını kontrol et
+    const kullanici = await pool.query(
+      "SELECT * FROM Kullanici WHERE kullaniciId = $1 AND aktifMi = true",
+      [kullaniciId]
+    );
+
+    if (kullanici.rows.length === 0) {
+      return res
+        .status(403)
+        .json({ message: "Aktif olmayan kullanıcılar işlem yapamaz" });
+    }
+
     // Forumun sahibine ait mi kontrolü
     const forum = await pool.query(
       `SELECT * FROM Forum WHERE forumId = $1 AND olusturanId = $2`,
@@ -58,8 +83,20 @@ const forumSil = async (req, res) => {
   const kullaniciId = req.user.kullaniciId;
 
   try {
+    // Kullanıcı aktif mi kontrol et
+    const kullanici = await pool.query(
+      "SELECT * FROM Kullanici WHERE kullaniciId = $1 AND aktifMi = true",
+      [kullaniciId]
+    );
+
+    if (kullanici.rows.length === 0) {
+      return res
+        .status(403)
+        .json({ message: "Aktif olmayan kullanıcılar işlem yapamaz" });
+    }
+
     // Forum sahibini kontrol et
-    const forum = await pool.query(`SELECT * FROM Forum WHERE forumId = $1`, [
+    const forum = await pool.query("SELECT * FROM Forum WHERE forumId = $1", [
       forumId,
     ]);
 
@@ -71,7 +108,7 @@ const forumSil = async (req, res) => {
       return res.status(403).send("Bu forumu silme yetkiniz yok.");
     }
 
-    await pool.query(`DELETE FROM Forum WHERE forumId = $1`, [forumId]);
+    await pool.query("DELETE FROM Forum WHERE forumId = $1", [forumId]);
 
     res.status(200).send("Forum başarıyla silindi.");
   } catch (err) {
@@ -89,12 +126,25 @@ const entryEkle = async (req, res) => {
   });
 
   try {
+    // Kullanıcının aktif olup olmadığını kontrol et
+    const kullanici = await pool.query(
+      "SELECT * FROM Kullanici WHERE kullaniciId = $1 AND aktifMi = true",
+      [kullaniciId]
+    );
+
+    if (kullanici.rows.length === 0) {
+      return res
+        .status(403)
+        .json({ message: "Aktif olmayan kullanıcılar işlem yapamaz" });
+    }
+
     const result = await pool.query(
       `INSERT INTO Entry (forumId, kullaniciId, icerik, olusturmaTarihi)
-           VALUES ($1, $2, $3, $4) 
-           RETURNING *`,
+       VALUES ($1, $2, $3, $4) 
+       RETURNING *`,
       [forumId, kullaniciId, icerik, istanbulTime]
     );
+
     res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error(err);
@@ -107,6 +157,18 @@ const entryGuncelle = async (req, res) => {
   const kullaniciId = req.user.kullaniciId;
 
   try {
+    // Kullanıcının aktif olup olmadığını kontrol et
+    const kullanici = await pool.query(
+      "SELECT * FROM Kullanici WHERE kullaniciId = $1 AND aktifMi = true",
+      [kullaniciId]
+    );
+
+    if (kullanici.rows.length === 0) {
+      return res
+        .status(403)
+        .json({ message: "Aktif olmayan kullanıcılar işlem yapamaz" });
+    }
+
     // Entry sahibine ait mi kontrolü
     const entry = await pool.query(
       `SELECT * FROM Entry WHERE entryId = $1 AND kullaniciId = $2`,
@@ -137,6 +199,18 @@ const entrySil = async (req, res) => {
   const kullaniciId = req.user.kullaniciId;
 
   try {
+    // Kullanıcının aktif olup olmadığını kontrol et
+    const kullanici = await pool.query(
+      "SELECT * FROM Kullanici WHERE kullaniciId = $1 AND aktifMi = true",
+      [kullaniciId]
+    );
+
+    if (kullanici.rows.length === 0) {
+      return res
+        .status(403)
+        .json({ message: "Aktif olmayan kullanıcılar işlem yapamaz" });
+    }
+
     // Entry sahibini kontrol et
     const entry = await pool.query(`SELECT * FROM Entry WHERE entryId = $1`, [
       entryId,
@@ -146,10 +220,12 @@ const entrySil = async (req, res) => {
       return res.status(404).send("Entry bulunamadı.");
     }
 
+    // Entry sahibinin kim olduğunu kontrol et
     if (entry.rows[0].kullaniciid !== kullaniciId) {
       return res.status(403).send("Bu entry'yi silme yetkiniz yok.");
     }
 
+    // Entry'yi sil
     await pool.query(`DELETE FROM Entry WHERE entryId = $1`, [entryId]);
 
     res.status(200).send("Entry başarıyla silindi.");
@@ -320,6 +396,18 @@ const entryTepkiEkleGuncelle = async (req, res) => {
   });
 
   try {
+    // Kullanıcı aktif mi kontrol et
+    const kullanici = await pool.query(
+      "SELECT * FROM Kullanici WHERE kullaniciId = $1 AND aktifMi = true",
+      [kullaniciId]
+    );
+
+    if (kullanici.rows.length === 0) {
+      return res
+        .status(403)
+        .json({ message: "Aktif olmayan kullanıcılar işlem yapamaz" });
+    }
+
     // Entry sahibini bul
     const entrySahibiQuery = await pool.query(
       "SELECT kullaniciId FROM Entry WHERE entryId = $1",

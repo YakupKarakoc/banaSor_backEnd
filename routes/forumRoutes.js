@@ -19,9 +19,11 @@ const {
  * /api/forum/forumEkle:
  *   post:
  *     summary: Forum oluşturma
- *     description: Yeni bir forum oluşturur.
+ *     description: Yeni bir forum oluşturur. Sadece aktif kullanıcılar forum oluşturabilir.
  *     tags:
  *       - Forum
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -35,6 +37,9 @@ const {
  *               universiteId:
  *                 type: integer
  *                 description: Forumun ait olduğu üniversite ID'si
+ *             required:
+ *               - baslik
+ *               - universiteId
  *     responses:
  *       201:
  *         description: Forum başarıyla oluşturuldu.
@@ -45,23 +50,21 @@ const {
  *               properties:
  *                 forumId:
  *                   type: integer
- *                   description: Oluşturulan forum ID'si
  *                 olusturanId:
  *                   type: integer
- *                   description: Forumun oluşturan kullanıcının ID'si
  *                 baslik:
  *                   type: string
- *                   description: Forum başlığı
  *                 universiteId:
  *                   type: integer
- *                   description: Forumun ait olduğu üniversite ID'si
  *                 olusturmaTarihi:
  *                   type: string
  *                   format: date-time
- *                   description: Forum oluşturulma tarihi
+ *       403:
+ *         description: Hesabınız pasif durumda. Forum oluşturamazsınız.
  *       500:
  *         description: Forum oluşturulamadı
  */
+
 router.post("/forumEkle", auth, forumEkle);
 
 /**
@@ -69,9 +72,11 @@ router.post("/forumEkle", auth, forumEkle);
  * /api/forum/forumGuncelle:
  *   patch:
  *     summary: Forum başlığını güncelle
- *     description: Kullanıcıya ait forumun başlığını günceller.
+ *     description: Kullanıcıya ait forumun başlığını günceller. Sadece aktif kullanıcılar işlem yapabilir.
  *     tags:
  *       - Forum
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -92,10 +97,11 @@ router.post("/forumEkle", auth, forumEkle);
  *       200:
  *         description: Başlık başarıyla güncellendi
  *       403:
- *         description: Başlığı güncelleme yetkisi yok
+ *         description: Başlığı güncelleme yetkisi yok veya kullanıcı pasif durumda
  *       500:
  *         description: Başlık güncellenemedi
  */
+
 router.patch("/forumGuncelle", auth, forumGuncelle);
 
 /**
@@ -103,7 +109,7 @@ router.patch("/forumGuncelle", auth, forumGuncelle);
  * /api/forum/forumSil:
  *   delete:
  *     summary: Forum sil
- *     description: Kullanıcıya ait foruma ait veriyi siler.
+ *     description: Kullanıcıya ait foruma ait veriyi siler. Hesabı pasif olan kullanıcılar bu işlemi yapamaz.
  *     tags:
  *       - Forum
  *     requestBody:
@@ -121,7 +127,11 @@ router.patch("/forumGuncelle", auth, forumGuncelle);
  *       200:
  *         description: Forum başarıyla silindi
  *       403:
- *         description: Yetkisiz işlem
+ *         description: Hesabınız pasif durumda, işlem yapılamaz
+ *       404:
+ *         description: Forum bulunamadı
+ *       500:
+ *         description: Forum silinemedi
  */
 router.delete("/forumSil", auth, forumSil);
 
@@ -130,9 +140,11 @@ router.delete("/forumSil", auth, forumSil);
  * /api/forum/entryEkle:
  *   post:
  *     summary: Entry ekleme
- *     description: Belirli bir foruma entry ekler.
+ *     description: Belirli bir foruma entry ekler. Yalnızca aktif kullanıcılar entry ekleyebilir.
  *     tags:
  *       - Forum
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -173,6 +185,8 @@ router.delete("/forumSil", auth, forumSil);
  *                   type: string
  *                   format: date-time
  *                   description: Entry oluşturulma tarihi
+ *       403:
+ *         description: Pasif kullanıcı entry ekleyemez.
  *       500:
  *         description: Entry eklenemedi
  */
@@ -184,7 +198,7 @@ router.post("/entryEkle", auth, entryEkle);
  * /api/forum/entryGuncelle:
  *   patch:
  *     summary: Entry içeriğini güncelle
- *     description: Kullanıcıya ait entry'nin içeriğini günceller.
+ *     description: Kullanıcıya ait entry'nin içeriğini günceller. Pasif kullanıcılar işlem yapamaz.
  *     tags:
  *       - Forum
  *     requestBody:
@@ -207,7 +221,7 @@ router.post("/entryEkle", auth, entryEkle);
  *       200:
  *         description: İçerik başarıyla güncellendi
  *       403:
- *         description: İçeriği güncelleme yetkisi yok
+ *         description: Kullanıcı pasif veya entry bu kullanıcıya ait değil
  *       500:
  *         description: İçerik güncellenemedi
  */
@@ -218,7 +232,7 @@ router.patch("/entryGuncelle", auth, entryGuncelle);
  * /api/forum/entrySil:
  *   delete:
  *     summary: Entry sil
- *     description: Kullanıcıya ait entry'yi siler.
+ *     description: Kullanıcıya ait entry'yi siler. Kullanıcının aktif olması gerekmektedir.
  *     tags:
  *       - Forum
  *     requestBody:
@@ -236,7 +250,11 @@ router.patch("/entryGuncelle", auth, entryGuncelle);
  *       200:
  *         description: Entry başarıyla silindi
  *       403:
- *         description: Yetkisiz işlem
+ *         description: Hesabınız pasif durumda, işlem yapılamaz veya Yetkisiz işlem
+ *       404:
+ *         description: Entry bulunamadı
+ *       500:
+ *         description: Server hatası
  */
 router.delete("/entrySil", auth, entrySil);
 
@@ -422,6 +440,10 @@ router.get("/getir/universite", universiteForumGetir);
  *       - Dislike puan üzerinde değişiklik yapmaz.
  *       - Dislike -> Like dönüşümünde puan +2 artar.
  *       - Like -> Dislike dönüşümünde puan -2 azalır.
+ *
+ *       **Kullanıcı Durumu:**
+ *       - Pasif hesaplar tepki veremez.
+ *       - Pasif hesaplardan tepki işlemi engellenir ve `403` hatası döndürülür.
  *     tags: [Tepkiler]
  *     security:
  *       - bearerAuth: []
@@ -465,6 +487,16 @@ router.get("/getir/universite", universiteForumGetir);
  *                 message:
  *                   type: string
  *                   example: Geçersiz tepki türü
+ *       403:
+ *         description: Hesap pasif olduğu için tepki verilemez
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Hesabınız pasif durumda, işlem yapılamaz
  *       404:
  *         description: Entry bulunamadı
  *         content:

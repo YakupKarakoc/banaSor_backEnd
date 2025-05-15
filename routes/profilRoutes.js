@@ -206,6 +206,7 @@ router.get("/entrylerim", auth, kullaniciEntryleriGetir);
  *         description: Sunucu hatası
  */
 router.get("/soru/begenilenler", auth, begenilenSorulariGetir);
+
 /**
  * @swagger
  * /api/profil/guncelle:
@@ -233,11 +234,15 @@ router.get("/soru/begenilenler", auth, begenilenSorulariGetir);
  *               kullaniciAdi:
  *                 type: string
  *                 example: ahmetk
+ *               aktifMi:
+ *                 type: boolean
+ *                 example: false
  *             required:
  *               - ad
  *               - soyad
  *               - sifre
  *               - kullaniciAdi
+ *               - aktifMi
  *     responses:
  *       200:
  *         description: Güncelleme başarılı
@@ -264,6 +269,9 @@ router.get("/soru/begenilenler", auth, begenilenSorulariGetir);
  *                     kullaniciAdi:
  *                       type: string
  *                       example: ahmetk
+ *                     aktifMi:
+ *                       type: boolean
+ *                       example: false
  *       401:
  *         description: Yetkisiz - Token eksik
  *       403:

@@ -60,6 +60,7 @@ router.get("/konu/getir", konulariGetir);
  * /api/soru/soruOlustur:
  *   post:
  *     summary: Yeni bir soru ekle
+ *     description: Sadece aktif kullanıcılar soru ekleyebilir.
  *     tags: [Sorular]
  *     security:
  *       - bearerAuth: []
@@ -85,7 +86,12 @@ router.get("/konu/getir", konulariGetir);
  *         description: Soru başarıyla eklendi
  *       401:
  *         description: Yetkisiz
+ *       403:
+ *         description: Pasif kullanıcılar soru ekleyemez
+ *       500:
+ *         description: Soru eklenemedi
  */
+
 router.post("/soruOlustur", auth, soruEkle);
 
 /**
@@ -116,6 +122,10 @@ router.post("/soruOlustur", auth, soruEkle);
  *     responses:
  *       200:
  *         description: Güncellenen soru
+ *       403:
+ *         description: Soru güncellenemedi - Kullanıcı aktif değil veya yetkisi yok
+ *       500:
+ *         description: Soru güncellenemedi
  */
 router.patch("/soruGuncelle/:id", auth, soruGuncelle);
 
@@ -138,7 +148,7 @@ router.patch("/soruGuncelle/:id", auth, soruGuncelle);
  *       204:
  *         description: Soru silindi
  *       403:
- *         description: Bu soruyu silme yetkiniz yok
+ *         description: Bu soruyu silme yetkiniz yok veya hesabınız pasif durumda
  */
 router.delete("/soruSil/:id", auth, soruSil);
 
@@ -147,6 +157,7 @@ router.delete("/soruSil/:id", auth, soruSil);
  * /api/soru/cevapOlustur:
  *   post:
  *     summary: Bir soruya cevap ver
+ *     description: Sadece aktif kullanıcılar tarafından kullanılabilir. Pasif kullanıcılar cevap ekleyemez.
  *     tags: [Sorular]
  *     security:
  *       - bearerAuth: []
@@ -159,15 +170,22 @@ router.delete("/soruSil/:id", auth, soruSil);
  *             properties:
  *               soruId:
  *                 type: integer
+ *                 description: Cevap verilecek sorunun ID'si
  *               icerik:
  *                 type: string
+ *                 description: Cevap içeriği
  *             required:
  *               - soruId
  *               - icerik
  *     responses:
  *       201:
- *         description: Cevap eklendi
+ *         description: Cevap başarıyla eklendi
+ *       403:
+ *         description: Pasif kullanıcılar cevap ekleyemez
+ *       500:
+ *         description: Cevap eklenemedi
  */
+
 router.post("/cevapOlustur", auth, cevapEkle);
 
 /**
@@ -175,6 +193,7 @@ router.post("/cevapOlustur", auth, cevapEkle);
  * /api/soru/cevapGuncelle/{id}:
  *   patch:
  *     summary: Cevap içeriğini güncelle
+ *     description: Sadece aktif kullanıcılar kendi cevaplarını güncelleyebilir.
  *     tags: [Sorular]
  *     security:
  *       - bearerAuth: []
@@ -197,15 +216,20 @@ router.post("/cevapOlustur", auth, cevapEkle);
  *                 example: Güncellenmiş cevap içeriği
  *     responses:
  *       200:
- *         description: Güncellenen cevap
+ *         description: Cevap başarıyla güncellendi
+ *       403:
+ *         description: Yetkiniz yok veya kullanıcı pasif
+ *       500:
+ *         description: Cevap güncellenemedi
  */
+
 router.patch("/cevapGuncelle/:id", auth, cevapGuncelle);
 
 /**
  * @swagger
  * /api/soru/cevapSil/{id}:
  *   delete:
- *     summary: Cevap sil (sadece kendi cevabı)
+ *     summary: Cevap sil (sadece kendi cevabı, aktif kullanıcı)
  *     tags: [Sorular]
  *     security:
  *       - bearerAuth: []
@@ -220,7 +244,7 @@ router.patch("/cevapGuncelle/:id", auth, cevapGuncelle);
  *       204:
  *         description: Cevap silindi
  *       403:
- *         description: Bu cevabı silme yetkiniz yok
+ *         description: Bu cevabı silme yetkiniz yok veya hesabınız pasif durumda
  */
 router.delete("/cevapSil/:id", auth, cevapSil);
 
@@ -457,6 +481,9 @@ router.get("/getir/fakulte", fakulteSoruGetir);
  *       - Dislike puan üzerinde değişiklik yapmaz.
  *       - Dislike -> Like dönüşümünde puan +5 artar.
  *       - Like -> Dislike dönüşümünde puan -5 azalır.
+ *
+ *       **Aktif olmayan kullanıcılar için:**
+ *       - Eğer kullanıcı pasifse, tepki işlemi gerçekleştirilemez ve `403 Forbidden` hatası döner.
  *     tags: [Tepkiler]
  *     security:
  *       - bearerAuth: []
@@ -500,6 +527,16 @@ router.get("/getir/fakulte", fakulteSoruGetir);
  *                 message:
  *                   type: string
  *                   example: Geçersiz tepki türü
+ *       403:
+ *         description: Kullanıcı pasif, işlem yapılmaz
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Kullanıcı pasif, işlem yapılmaz
  *       404:
  *         description: Cevap bulunamadı
  *         content:
@@ -523,6 +560,7 @@ router.post("/cevap/tepki", auth, tepkiEkleGuncelle);
  *     description: |
  *       - Eğer kullanıcı daha önce beğenmemişse, beğeni ekler ve soruyu soran kullanıcının puanını 5 artırır.
  *       - Eğer kullanıcı daha önce beğenmişse, beğeniyi geri çeker ve soruyu soran kullanıcının puanını 5 azaltır.
+ *       - Kullanıcının aktif olmaması durumunda işlem yapılmaz ve `403 Forbidden` hatası döner.
  *     tags: [Tepkiler]
  *     security:
  *       - bearerAuth: []
@@ -551,6 +589,8 @@ router.post("/cevap/tepki", auth, tepkiEkleGuncelle);
  *                   example: Soru beğenildi
  *       401:
  *         description: Yetkisiz - Token eksik veya geçersiz
+ *       403:
+ *         description: Kullanıcı pasif - işlem yapılmaz
  *       500:
  *         description: Sunucu hatası
  */

@@ -21,6 +21,10 @@ const {
  * /api/takip/takipEt/{universiteId}:
  *   post:
  *     summary: Belirtilen üniversiteyi takip et
+ *     description: |
+ *       - Kullanıcı daha önce bu üniversiteyi takip etmemişse, takip edilir.
+ *       - Aynı kullanıcı aynı üniversiteyi tekrar takip etmeye çalışırsa işlem yok sayılır.
+ *       - **Pasif kullanıcılar takip işlemi yapamaz.**
  *     tags: [Üniversite Takip]
  *     security:
  *       - bearerAuth: []
@@ -34,8 +38,44 @@ const {
  *     responses:
  *       200:
  *         description: Takip başarılı
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Takip edildi
+ *       400:
+ *         description: Eksik veya geçersiz veri
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Eksik veri
+ *       403:
+ *         description: Pasif kullanıcı işlem yapamaz
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Kullanıcı pasif, takip işlemi yapılamaz
  *       500:
  *         description: Sunucu hatası
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Sunucu hatası
  */
 router.post("/takipEt/:universiteId", auth, takipEt);
 
@@ -57,9 +97,14 @@ router.post("/takipEt/:universiteId", auth, takipEt);
  *     responses:
  *       200:
  *         description: Takipten çıkıldı
+ *       403:
+ *         description: Pasif kullanıcılar takipten çıkamaz
+ *       404:
+ *         description: Kullanıcı bulunamadı
  *       500:
  *         description: Sunucu hatası
  */
+
 router.delete("/takipCik/:universiteId", auth, takiptenCik);
 
 /**

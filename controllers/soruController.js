@@ -28,12 +28,25 @@ const soruEkle = async (req, res) => {
   });
 
   try {
+    // Kullanıcının aktif olup olmadığını kontrol et
+    const kullanici = await pool.query(
+      "SELECT * FROM Kullanici WHERE kullaniciId = $1 AND aktifMi = true",
+      [soranId]
+    );
+
+    if (kullanici.rows.length === 0) {
+      return res
+        .status(403)
+        .json({ message: "Aktif olmayan kullanıcılar işlem yapamaz" });
+    }
+
     const result = await pool.query(
       `INSERT INTO Soru (soranId, universiteId, bolumId, konuId, icerik, olusturmaTarihi)
          VALUES ($1, $2, $3, $4, $5, $6) 
          RETURNING *`,
       [soranId, universiteId, bolumId, konuId, icerik, istanbulTime]
     );
+
     res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error(err);
@@ -48,6 +61,18 @@ const soruGuncelle = async (req, res) => {
   const userId = req.user.kullaniciId;
 
   try {
+    // Kullanıcının aktif olup olmadığını kontrol et
+    const kullanici = await pool.query(
+      "SELECT * FROM Kullanici WHERE kullaniciId = $1 AND aktifMi = true",
+      [userId]
+    );
+
+    if (kullanici.rows.length === 0) {
+      return res
+        .status(403)
+        .json({ message: "Aktif olmayan kullanıcılar işlem yapamaz" });
+    }
+
     // Yetki kontrolü
     const kontrol = await pool.query(
       "SELECT * FROM Soru WHERE soruId = $1 AND soranId = $2",
@@ -60,6 +85,7 @@ const soruGuncelle = async (req, res) => {
         .json({ message: "Bu soruyu güncelleme yetkiniz yok" });
     }
 
+    // Soruyu güncelle
     const result = await pool.query(
       "UPDATE Soru SET icerik = $1 WHERE soruId = $2 RETURNING *",
       [icerik, soruId]
@@ -78,6 +104,19 @@ const soruSil = async (req, res) => {
   const userId = req.user.kullaniciId;
 
   try {
+    // Kullanıcının aktif olup olmadığını kontrol et
+    const kullanici = await pool.query(
+      "SELECT * FROM Kullanici WHERE kullaniciId = $1 AND aktifMi = true",
+      [userId]
+    );
+
+    if (kullanici.rows.length === 0) {
+      return res
+        .status(403)
+        .json({ message: "Aktif olmayan kullanıcılar işlem yapamaz" });
+    }
+
+    // Soru sahibine ait mi kontrolü
     const kontrol = await pool.query(
       "SELECT * FROM Soru WHERE soruId = $1 AND soranId = $2",
       [soruId, userId]
@@ -100,18 +139,31 @@ const cevapEkle = async (req, res) => {
   const { soruId, icerik } = req.body;
   const cevaplayanId = req.user.kullaniciId;
 
-  // İstanbul saatine göre tarih almak
-  const istanbulTime = new Date().toLocaleString("en-US", {
-    timeZone: "Europe/Istanbul",
-  });
-
   try {
+    // Kullanıcının aktif olup olmadığını kontrol et
+    const kullanici = await pool.query(
+      "SELECT * FROM Kullanici WHERE kullaniciId = $1 AND aktifMi = true",
+      [cevaplayanId]
+    );
+
+    if (kullanici.rows.length === 0) {
+      return res
+        .status(403)
+        .json({ message: "Aktif olmayan kullanıcılar işlem yapamaz" });
+    }
+
+    // İstanbul saatine göre tarih al
+    const istanbulTime = new Date().toLocaleString("en-US", {
+      timeZone: "Europe/Istanbul",
+    });
+
     const result = await pool.query(
       `INSERT INTO Cevap (soruId, cevaplayanId, icerik, olusturmaTarihi)
          VALUES ($1, $2, $3, $4) 
          RETURNING *`,
       [soruId, cevaplayanId, icerik, istanbulTime]
     );
+
     res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error(err);
@@ -125,6 +177,22 @@ const cevapGuncelle = async (req, res) => {
   const userId = req.user.kullaniciId;
 
   try {
+    // Kullanıcının aktiflik durumu kontrol ediliyor
+    const kullaniciDurumu = await pool.query(
+      "SELECT aktifMi FROM Kullanici WHERE kullaniciId = $1",
+      [userId]
+    );
+
+    if (
+      kullaniciDurumu.rows.length === 0 ||
+      kullaniciDurumu.rows[0].aktifmi === false
+    ) {
+      return res
+        .status(403)
+        .json({ message: "Pasif kullanıcılar cevap güncelleyemez" });
+    }
+
+    // Cevabın sahibine mi ait olduğunu kontrol et
     const kontrol = await pool.query(
       "SELECT * FROM Cevap WHERE cevapId = $1 AND cevaplayanId = $2",
       [cevapId, userId]
@@ -136,6 +204,7 @@ const cevapGuncelle = async (req, res) => {
         .json({ message: "Bu cevabı güncelleme yetkiniz yok" });
     }
 
+    // Güncelleme işlemi
     const result = await pool.query(
       "UPDATE Cevap SET icerik = $1 WHERE cevapId = $2 RETURNING *",
       [icerik, cevapId]
@@ -148,12 +217,24 @@ const cevapGuncelle = async (req, res) => {
   }
 };
 
-// ✅ Cevap sil – sadece kendi cevabını silebilsin
+// ✅ Cevap sil – sadece kendi cevabını silebilsin, pasif kullanıcılar silemesin
 const cevapSil = async (req, res) => {
   const cevapId = req.params.id;
   const userId = req.user.kullaniciId;
 
   try {
+    // Kullanıcının aktif olup olmadığını kontrol et
+    const kullanici = await pool.query(
+      "SELECT * FROM Kullanici WHERE kullaniciId = $1 AND aktifMi = true",
+      [userId]
+    );
+
+    if (kullanici.rows.length === 0) {
+      return res
+        .status(403)
+        .json({ message: "Aktif olmayan kullanıcılar işlem yapamaz" });
+    }
+
     const kontrol = await pool.query(
       "SELECT * FROM Cevap WHERE cevapId = $1 AND cevaplayanId = $2",
       [cevapId, userId]
@@ -462,6 +543,18 @@ const tepkiEkleGuncelle = async (req, res) => {
   });
 
   try {
+    // Kullanıcının aktif olup olmadığını kontrol et
+    const kullanici = await pool.query(
+      "SELECT * FROM Kullanici WHERE kullaniciId = $1 AND aktifMi = true",
+      [kullaniciId]
+    );
+
+    if (kullanici.rows.length === 0) {
+      return res
+        .status(403)
+        .json({ message: "Aktif olmayan kullanıcılar işlem yapamaz" });
+    }
+
     // Cevap sahibini bul
     const cevapSahibiQuery = await pool.query(
       "SELECT cevaplayanId FROM Cevap WHERE cevapId = $1",
@@ -548,6 +641,18 @@ const soruBegen = async (req, res) => {
   });
 
   try {
+    // Kullanıcının aktif olup olmadığını kontrol et
+    const kullanici = await pool.query(
+      "SELECT * FROM Kullanici WHERE kullaniciId = $1 AND aktifMi = true",
+      [kullaniciId]
+    );
+
+    if (kullanici.rows.length === 0) {
+      return res
+        .status(403)
+        .json({ message: "Aktif olmayan kullanıcılar işlem yapamaz" });
+    }
+
     const existing = await pool.query(
       "SELECT * FROM SoruBegeni WHERE soruId = $1 AND kullaniciId = $2",
       [soruId, kullaniciId]
@@ -578,7 +683,7 @@ const soruBegen = async (req, res) => {
       return res.json({ message: "Beğeni geri çekildi" });
     }
 
-    // Burada tarih bilgisini ekliyoruz
+    // Beğeni işlemi yapılıyor
     await pool.query(
       "INSERT INTO SoruBegeni (soruId, kullaniciId, tarih) VALUES ($1, $2, $3)",
       [soruId, kullaniciId, istanbulTime]

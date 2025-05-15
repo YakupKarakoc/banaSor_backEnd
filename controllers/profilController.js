@@ -167,7 +167,7 @@ const begenilenSorulariGetir = async (req, res) => {
 
 const profilGuncelle = async (req, res) => {
   const kullaniciId = req.user.kullaniciId;
-  const { ad, soyad, sifre, kullaniciAdi } = req.body;
+  const { ad, soyad, sifre, kullaniciAdi, aktifMi } = req.body;
 
   try {
     const hashedPassword = await bcrypt.hash(sifre, 10);
@@ -177,10 +177,11 @@ const profilGuncelle = async (req, res) => {
          ad = $1,
          soyad = $2,
          sifre = $3,
-         kullaniciAdi = $4
-       WHERE kullaniciId = $5
-       RETURNING kullaniciId, ad, soyad, kullaniciAdi`,
-      [ad, soyad, hashedPassword, kullaniciAdi, kullaniciId]
+         kullaniciAdi = $4,
+         aktifMi = $5
+       WHERE kullaniciId = $6
+       RETURNING kullaniciId, ad, soyad, kullaniciAdi, aktifMi`,
+      [ad, soyad, hashedPassword, kullaniciAdi, aktifMi, kullaniciId]
     );
 
     res.json({ mesaj: "Güncelleme başarılı", kullanici: sonuc.rows[0] });

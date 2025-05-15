@@ -12,6 +12,18 @@ const takipEt = async (req, res) => {
   }
 
   try {
+    // Kullanıcının aktiflik durumu kontrol ediliyor
+    const kullanici = await pool.query(
+      "SELECT * FROM Kullanici WHERE kullaniciId = $1 AND aktifMi = true",
+      [kullaniciId]
+    );
+
+    if (kullanici.rows.length === 0) {
+      return res
+        .status(403)
+        .json({ message: "Aktif olmayan kullanıcılar işlem yapamaz" });
+    }
+
     await pool.query(
       `
       INSERT INTO UniversiteTakip (universiteId, kullaniciId)
@@ -33,11 +45,21 @@ const takiptenCik = async (req, res) => {
   const kullaniciId = req.user.kullaniciId;
 
   try {
+    // Kullanıcının aktif olup olmadığını kontrol et
+    const kullanici = await pool.query(
+      "SELECT * FROM Kullanici WHERE kullaniciId = $1 AND aktifMi = true",
+      [kullaniciId]
+    );
+
+    if (kullanici.rows.length === 0) {
+      return res
+        .status(403)
+        .json({ message: "Aktif olmayan kullanıcılar işlem yapamaz" });
+    }
+
+    // Takipten çık
     await pool.query(
-      `
-      DELETE FROM UniversiteTakip
-      WHERE universiteId = $1 AND kullaniciId = $2
-    `,
+      "DELETE FROM UniversiteTakip WHERE universiteId = $1 AND kullaniciId = $2",
       [universiteId, kullaniciId]
     );
 
