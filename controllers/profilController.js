@@ -191,6 +191,36 @@ const profilGuncelle = async (req, res) => {
   }
 };
 
+const olusturdugumGruplar = async (req, res) => {
+  const kullaniciId = req.user.kullaniciId;
+
+  try {
+    const gruplar = await pool.query(
+      `SELECT 
+         g.grupId,
+         g.ad,
+         g.olusturmaTarihi,
+         COUNT(gu.uyeId) AS uyeSayisi
+       FROM 
+         Grup g
+       LEFT JOIN 
+         GrupUye gu ON g.grupId = gu.grupId
+       WHERE 
+         g.olusturanId = $1
+       GROUP BY 
+         g.grupId
+       ORDER BY 
+         g.olusturmaTarihi DESC`,
+      [kullaniciId]
+    );
+
+    return res.status(200).json({ gruplar: gruplar.rows });
+  } catch (error) {
+    console.error("Oluşturulan grupları listeleme hatası:", error);
+    return res.status(500).json({ hata: "Sunucu hatası" });
+  }
+};
+
 module.exports = {
   profilGuncelle,
   kullaniciSorulariGetir,
@@ -198,4 +228,5 @@ module.exports = {
   kullaniciEntryleriGetir,
   kullaniciCevaplariGetir,
   begenilenSorulariGetir,
+  olusturdugumGruplar,
 };

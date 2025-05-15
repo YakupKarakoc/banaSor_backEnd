@@ -6,6 +6,7 @@ const {
   kullaniciForumlariGetir,
   kullaniciEntryleriGetir,
   begenilenSorulariGetir,
+  olusturdugumGruplar,
 } = require("../controllers/profilController");
 const auth = require("../middleware/authMiddleware");
 
@@ -281,5 +282,42 @@ router.get("/soru/begenilenler", auth, begenilenSorulariGetir);
  */
 
 router.put("/guncelle", auth, profilGuncelle);
+
+/**
+ * @swagger
+ * /api/profil/olusturdugumGruplar:
+ *   get:
+ *     summary: Kullanıcının oluşturduğu grupları ve üye sayılarını listeler
+ *     tags: [Profil]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Kullanıcının oluşturduğu gruplar listelendi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 gruplar:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       grupId:
+ *                         type: integer
+ *                       ad:
+ *                         type: string
+ *                       olusturmaTarihi:
+ *                         type: string
+ *                         format: date-time
+ *                       uyeSayisi:
+ *                         type: integer
+ *       403:
+ *         description: Pasif kullanıcılar işlem yapamaz
+ *       500:
+ *         description: Sunucu hatası
+ */
+router.get("/olusturdugumGruplar", auth, olusturdugumGruplar);
 
 module.exports = router;

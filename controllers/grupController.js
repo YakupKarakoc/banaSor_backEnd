@@ -92,7 +92,83 @@ const katilGrup = async (req, res) => {
   }
 };
 
+const gruptanCik = async (req, res) => {
+  const uyeId = req.user.kullaniciId;
+  const grupId = parseInt(req.params.grupId, 10);
+
+  if (!grupId) {
+    return res.status(400).json({ hata: "Grup ID gerekli" });
+  }
+
+  try {
+    // Kullanıcının aktifliğini kontrol et
+    const kullanici = await pool.query(
+      "SELECT * FROM Kullanici WHERE kullaniciId = $1 AND aktifMi = true",
+      [uyeId]
+    );
+
+    if (kullanici.rows.length === 0) {
+      return res
+        .status(403)
+        .json({ mesaj: "Pasif kullanıcılar gruptan çıkamaz" });
+    }
+
+    // Kullanıcının üyeliğini kontrol et
+    const uyelikKontrol = await pool.query(
+      "SELECT * FROM GrupUye WHERE grupId = $1 AND uyeId = $2",
+      [grupId, uyeId]
+    );
+
+    if (uyelikKontrol.rows.length === 0) {
+      return res.status(404).json({ mesaj: "Kullanıcı bu grubun üyesi değil" });
+    }
+
+    // Kullanıcıyı gruptan çıkar
+    await pool.query("DELETE FROM GrupUye WHERE grupId = $1 AND uyeId = $2", [
+      grupId,
+      uyeId,
+    ]);
+
+    return res.status(200).json({ mesaj: "Gruptan başarıyla çıkıldı" });
+  } catch (error) {
+    console.error("Gruptan çıkma hatası:", error);
+    return res.status(500).json({ hata: "Sunucu hatası" });
+  }
+};
+
+const listeleTumGruplar = async (req, res) => {
+  const kullaniciId = req.user.kullaniciId;
+
+  try {
+    const gruplar = await pool.query(
+      `SELECT 
+         g.grupId,
+         g.ad,
+         g.olusturmaTarihi,
+         k.kullaniciAdi,
+         COUNT(gu.uyeId) AS uyeSayisi
+       FROM 
+         Grup g
+       LEFT JOIN 
+         GrupUye gu ON g.grupId = gu.grupId
+       INNER JOIN 
+         Kullanici k ON g.olusturanId = k.kullaniciId
+       GROUP BY 
+         g.grupId, k.kullaniciAdi
+       ORDER BY 
+         g.olusturmaTarihi DESC`
+    );
+
+    return res.status(200).json({ gruplar: gruplar.rows });
+  } catch (error) {
+    console.error("Tüm grupları listeleme hatası:", error);
+    return res.status(500).json({ hata: "Sunucu hatası" });
+  }
+};
+
 module.exports = {
   olusturGrup,
   katilGrup,
+  gruptanCik,
+  listeleTumGruplar,
 };

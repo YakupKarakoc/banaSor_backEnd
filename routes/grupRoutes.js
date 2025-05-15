@@ -2,7 +2,12 @@ const express = require("express");
 const router = express.Router();
 const auth = require("../middleware/authMiddleware");
 
-const { katilGrup, olusturGrup } = require("../controllers/grupController");
+const {
+  katilGrup,
+  olusturGrup,
+  gruptanCik,
+  listeleTumGruplar,
+} = require("../controllers/grupController");
 
 /**
  * @swagger
@@ -95,5 +100,72 @@ router.post("/olustur", auth, olusturGrup);
  */
 
 router.post("/katil", auth, katilGrup);
+
+/**
+ * @swagger
+ * /api/grup/grupCik/{grupId}:
+ *   delete:
+ *     summary: Kullanıcı bir gruptan çıkar
+ *     tags: [Grup]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: grupId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Çıkılmak istenen grubun ID'si
+ *     responses:
+ *       200:
+ *         description: Gruptan başarıyla çıkıldı
+ *       400:
+ *         description: Eksik veya geçersiz grupId
+ *       403:
+ *         description: Pasif kullanıcılar işlem yapamaz
+ *       404:
+ *         description: Kullanıcı gruba üye değil
+ *       500:
+ *         description: Sunucu hatası
+ */
+router.delete("/grupCik/:grupId", auth, gruptanCik);
+
+/**
+ * @swagger
+ * /api/grup/grupList:
+ *   get:
+ *     summary: Sistemdeki tüm grupları listeler
+ *     tags: [Grup]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Tüm gruplar listelendi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 gruplar:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       grupId:
+ *                         type: integer
+ *                       ad:
+ *                         type: string
+ *                       olusturmaTarihi:
+ *                         type: string
+ *                         format: date-time
+ *                       kullaniciAdi:
+ *                         type: string
+ *                         description: Grubu oluşturan kullanıcının kullanıcı adı
+ *                       uyeSayisi:
+ *                         type: integer
+ *       500:
+ *         description: Sunucu hatası
+ */
+router.get("/grupList", auth, listeleTumGruplar);
 
 module.exports = router;
