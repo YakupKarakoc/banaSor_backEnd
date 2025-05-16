@@ -45,10 +45,15 @@ exports.login = async (req, res) => {
     const { email, sifre } = req.body;
 
     const user = await pool.query(
-      `SELECT k.*, kt.ad AS kullanicirolu
-       FROM Kullanici k
-       JOIN KullaniciTuru kt ON k.kullaniciTuruId = kt.kullaniciTuruId
-       WHERE k.email = $1`,
+      `SELECT 
+  k.*, 
+  k.kullaniciTuruId AS "kullaniciTuruId", 
+  kt.ad AS kullanicirolu
+FROM Kullanici k
+JOIN KullaniciTuru kt ON k.kullaniciTuruId = kt.kullaniciTuruId
+WHERE k.email = $1;
+
+`,
       [email]
     );
 
@@ -68,7 +73,11 @@ exports.login = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { kullaniciId: userData.kullaniciid, email: userData.email },
+      {
+        kullaniciId: userData.kullaniciid,
+        email: userData.email,
+        kullaniciTuruId: userData.kullaniciTuruId,
+      },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
