@@ -7,6 +7,8 @@ const {
   kullaniciEntryleriGetir,
   begenilenSorulariGetir,
   olusturdugumGruplar,
+  begenilenEntryleriGetir,
+  begenilenCevaplariGetir,
 } = require("../controllers/profilController");
 const auth = require("../middleware/authMiddleware");
 
@@ -319,5 +321,82 @@ router.put("/guncelle", auth, profilGuncelle);
  *         description: Sunucu hatası
  */
 router.get("/olusturdugumGruplar", auth, olusturdugumGruplar);
+
+/**
+ * @swagger
+ * /api/profil/entry/begenilenler:
+ *   get:
+ *     summary: Giriş yapan kullanıcının beğendiği entry'leri getirir
+ *     tags: [Profil]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Beğenilen entry'ler başarıyla getirildi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   entryId:
+ *                     type: integer
+ *                     example: 12
+ *                   entryIcerik:
+ *                     type: string
+ *                     example: "Bu bölüm hakkında çok güzel bilgiler verdiniz, teşekkürler."
+ *                   entryTarihi:
+ *                     type: string
+ *                     format: date-time
+ *                     example: "2025-05-14T13:45:00Z"
+ *                   forumId:
+ *                     type: integer
+ *                     example: 3
+ *                   forumBaslik:
+ *                     type: string
+ *                     example: "Boğaziçi Bilgisayar Mühendisliği Hakkında Sorular"
+ *                   forumSahibiId:
+ *                     type: integer
+ *                     example: 8
+ *                   forumSahibiAdi:
+ *                     type: string
+ *                     example: "ayse_mentor"
+ *                   entrySahibiId:
+ *                     type: integer
+ *                     example: 21
+ *                   entrySahibiAdi:
+ *                     type: string
+ *                     example: "mehmet123"
+ *                   likeSayisi:
+ *                     type: integer
+ *                     example: 10
+ *                   dislikeSayisi:
+ *                     type: integer
+ *                     example: 2
+ *       401:
+ *         description: Yetkisiz - JWT eksik veya geçersiz
+ *       500:
+ *         description: Sunucu hatası
+ */
+router.get("/entry/begenilenler", auth, begenilenEntryleriGetir);
+
+/**
+ * @swagger
+ * /api/profil/cevap/begenilenler:
+ *   get:
+ *     summary: Giriş yapan kullanıcının beğendiği cevapları getirir
+ *     tags: [Profil]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Beğenilen cevaplar başarıyla getirildi
+ *       401:
+ *         description: Yetkisiz - JWT eksik veya geçersiz
+ *       500:
+ *         description: Sunucu hatası
+ */
+router.get("/cevap/begenilenler", auth, begenilenCevaplariGetir);
 
 module.exports = router;

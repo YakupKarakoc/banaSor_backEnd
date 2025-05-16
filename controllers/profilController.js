@@ -221,6 +221,103 @@ const olusturdugumGruplar = async (req, res) => {
   }
 };
 
+const begenilenEntryleriGetir = async (req, res, next) => {
+  const kullaniciId = req.user.kullaniciId; // JWT ile gelen kullanıcı ID
+
+  const query = `
+    SELECT 
+        e.entryId,
+        e.icerik AS entryIcerik,
+        e.olusturmaTarihi AS entryTarihi,
+
+        f.forumId,
+        f.baslik AS forumBaslik,
+        forumOwner.kullaniciId AS forumSahibiId,
+        forumOwner.kullaniciAdi AS forumSahibiAdi,
+
+        entryOwner.kullaniciId AS entrySahibiId,
+        entryOwner.kullaniciAdi AS entrySahibiAdi,
+
+        COALESCE(likeCount.like_sayisi, 0) AS likeSayisi,
+        COALESCE(dislikeCount.dislike_sayisi, 0) AS dislikeSayisi
+
+    FROM EntryTepki et
+    JOIN Entry e ON e.entryId = et.entryId
+    JOIN Forum f ON f.forumId = e.forumId
+    JOIN Kullanici entryOwner ON entryOwner.kullaniciId = e.kullaniciId
+    JOIN Kullanici forumOwner ON forumOwner.kullaniciId = f.olusturanId
+
+    LEFT JOIN (
+        SELECT entryId, COUNT(*) AS like_sayisi
+        FROM EntryTepki
+        WHERE tepki = 'Like'
+        GROUP BY entryId
+    ) AS likeCount ON likeCount.entryId = e.entryId
+
+    LEFT JOIN (
+        SELECT entryId, COUNT(*) AS dislike_sayisi
+        FROM EntryTepki
+        WHERE tepki = 'Dislike'
+        GROUP BY entryId
+    ) AS dislikeCount ON dislikeCount.entryId = e.entryId
+
+    WHERE et.kullaniciId = $1 AND et.tepki = 'Like';
+  `;
+
+  try {
+    const { rows } = await pool.query(query, [kullaniciId]);
+    res.json(rows);
+  } catch (err) {
+    next(err);
+  }
+};
+
+const begenilenCevaplariGetir = async (req, res) => {
+  try {
+    const kullaniciId = req.user.kullaniciId;
+
+    const query = `
+      SELECT 
+        c.cevapId,
+        c.icerik AS "cevapIcerik",
+        c.olusturmaTarihi AS "cevapTarihi",
+        s.soruId,
+        s.icerik AS "soruIcerik",
+        s.soranId,
+        ks.kullaniciAdi AS "soranKullaniciAdi",
+        c.cevaplayanId,
+        kc.kullaniciAdi AS "cevaplayanKullaniciAdi",
+        COALESCE(like_count.count, 0) AS "likeSayisi",
+        COALESCE(dislike_count.count, 0) AS "dislikeSayisi"
+      FROM CevapTepki ct
+      JOIN Cevap c ON ct.cevapId = c.cevapId
+      JOIN Soru s ON c.soruId = s.soruId
+      JOIN Kullanici ks ON s.soranId = ks.kullaniciId
+      JOIN Kullanici kc ON c.cevaplayanId = kc.kullaniciId
+      LEFT JOIN (
+        SELECT cevapId, COUNT(*) as count
+        FROM CevapTepki
+        WHERE tepki = 'Like'
+        GROUP BY cevapId
+      ) like_count ON c.cevapId = like_count.cevapId
+      LEFT JOIN (
+        SELECT cevapId, COUNT(*) as count
+        FROM CevapTepki
+        WHERE tepki = 'Dislike'
+        GROUP BY cevapId
+      ) dislike_count ON c.cevapId = dislike_count.cevapId
+      WHERE ct.kullaniciId = $1 AND ct.tepki = 'Like'
+      ORDER BY c.olusturmaTarihi DESC
+    `;
+
+    const { rows } = await pool.query(query, [kullaniciId]);
+    res.json(rows);
+  } catch (err) {
+    console.error("Beğenilen cevapları çekerken hata:", err);
+    res.status(500).json({ message: "Sunucu hatası" });
+  }
+};
+
 module.exports = {
   profilGuncelle,
   kullaniciSorulariGetir,
@@ -229,4 +326,6 @@ module.exports = {
   kullaniciCevaplariGetir,
   begenilenSorulariGetir,
   olusturdugumGruplar,
+  begenilenEntryleriGetir,
+  begenilenCevaplariGetir,
 };
