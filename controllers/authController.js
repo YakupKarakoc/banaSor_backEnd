@@ -56,18 +56,24 @@ exports.login = async (req, res) => {
       return res.status(400).json({ error: "Geçersiz e-posta veya şifre" });
     }
 
-    const validPassword = await bcrypt.compare(sifre, user.rows[0].sifre);
+    const userData = user.rows[0];
+
+    if (!userData.onaylandimi) {
+      return res.status(403).json({ error: "Hesabınız henüz onaylanmamış." });
+    }
+
+    const validPassword = await bcrypt.compare(sifre, userData.sifre);
     if (!validPassword) {
       return res.status(400).json({ error: "Geçersiz e-posta veya şifre" });
     }
 
     const token = jwt.sign(
-      { kullaniciId: user.rows[0].kullaniciid, email: user.rows[0].email },
+      { kullaniciId: userData.kullaniciid, email: userData.email },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
 
-    const { sifre: _, ...userInfo } = user.rows[0];
+    const { sifre: _, ...userInfo } = userData;
     res.status(200).json({ message: "Giriş başarılı", token, user: userInfo });
   } catch (error) {
     res.status(500).json({ error: "Sunucu hatası" });

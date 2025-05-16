@@ -76,7 +76,10 @@ router.post("/register", register);
  *         description: Giriş başarılı, JWT döner
  *       400:
  *         description: Geçersiz kimlik bilgileri
+ *       403:
+ *         description: Hesap henüz onaylanmamış
  */
+
 router.post("/login", login);
 
 /**
