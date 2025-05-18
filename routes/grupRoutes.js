@@ -176,7 +176,7 @@ router.get("/grupList", auth, listeleTumGruplar);
  *     summary: Grup silme işlemi
  *     description: >
  *       Sadece grubu oluşturan kullanıcı grubu silebilir.
- *       Grup 2 üyeye sahipse silinemez.
+ *       Grup 2 veya daha fazla üyeye sahipse silinemez.
  *     tags:
  *       - Grup
  *     security:
@@ -208,7 +208,7 @@ router.get("/grupList", auth, listeleTumGruplar);
  *               properties:
  *                 message:
  *                   type: string
- *                   example: Grup 2 üyeye sahipse silinemez.
+ *                   example: Grup 2 veya daha fazla üyeye sahipse silinemez.
  *       403:
  *         description: Yetkisiz işlem. Aktif olmayan kullanıcı veya grubu oluşturan kişi değil.
  *         content:

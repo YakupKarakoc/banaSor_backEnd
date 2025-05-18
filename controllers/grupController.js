@@ -208,10 +208,10 @@ const silGrup = async (req, res, next) => {
 
     const uyeSayisi = parseInt(uyeRows[0].count);
 
-    if (uyeSayisi === 2) {
+    if (uyeSayisi >= 2) {
       return res
         .status(400)
-        .json({ message: "Grup 2 üyeye sahipse silinemez." });
+        .json({ message: "Grup 2 veya daha fazla üyeye sahipse silinemez." });
     }
 
     // Silme işlemi
