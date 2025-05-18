@@ -7,6 +7,7 @@ const {
   olusturGrup,
   gruptanCik,
   listeleTumGruplar,
+  silGrup,
 } = require("../controllers/grupController");
 
 /**
@@ -167,5 +168,71 @@ router.delete("/grupCik/:grupId", auth, gruptanCik);
  *         description: Sunucu hatası
  */
 router.get("/grupList", auth, listeleTumGruplar);
+
+/**
+ * @swagger
+ * /api/grup/grupSil/{id}:
+ *   delete:
+ *     summary: Grup silme işlemi
+ *     description: >
+ *       Sadece grubu oluşturan kullanıcı grubu silebilir.
+ *       Grup 2 üyeye sahipse silinemez.
+ *     tags:
+ *       - Grup
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Silinecek grubun ID'si
+ *     responses:
+ *       200:
+ *         description: Grup başarıyla silindi.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Grup başarıyla silindi.
+ *       400:
+ *         description: Silme işlemi yapılamadı (üye kısıtlaması)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Grup 2 üyeye sahipse silinemez.
+ *       403:
+ *         description: Yetkisiz işlem. Aktif olmayan kullanıcı veya grubu oluşturan kişi değil.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Aktif olmayan kullanıcılar işlem yapamaz
+ *       404:
+ *         description: Grup bulunamadı.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Grup bulunamadı.
+ *       401:
+ *         description: Yetkilendirme başarısız (JWT token eksik veya geçersiz).
+ */
+
+router.delete("/grupSil/:id", auth, silGrup);
 
 module.exports = router;

@@ -166,9 +166,70 @@ const listeleTumGruplar = async (req, res) => {
   }
 };
 
+const silGrup = async (req, res, next) => {
+  const userId = req.user.kullaniciId;
+  const groupId = parseInt(req.params.id);
+
+  try {
+    const kullanici = await pool.query(
+      "SELECT * FROM Kullanici WHERE kullaniciId = $1 AND aktifMi = true",
+      [userId]
+    );
+
+    if (kullanici.rows.length === 0) {
+      return res
+        .status(403)
+        .json({ message: "Aktif olmayan kullanıcılar işlem yapamaz" });
+    }
+
+    // 1. Grup var mı ve oluşturan bu kullanıcı mı?
+    const { rows: groupRows } = await pool.query(
+      "SELECT * FROM Grup WHERE grupId = $1",
+      [groupId]
+    );
+
+    if (groupRows.length === 0) {
+      return res.status(404).json({ message: "Grup bulunamadı." });
+    }
+
+    const group = groupRows[0];
+
+    if (group.olusturanid !== userId) {
+      return res
+        .status(403)
+        .json({ message: "Sadece grubu oluşturan kişi silebilir." });
+    }
+
+    // 2. Üye sayısını kontrol et
+    const { rows: uyeRows } = await pool.query(
+      "SELECT COUNT(*) FROM GrupUye WHERE grupId = $1",
+      [groupId]
+    );
+
+    const uyeSayisi = parseInt(uyeRows[0].count);
+
+    if (uyeSayisi === 2) {
+      return res
+        .status(400)
+        .json({ message: "Grup 2 üyeye sahipse silinemez." });
+    }
+
+    // Silme işlemi
+    {
+      await pool.query("DELETE FROM Grup WHERE grupId = $1", [groupId]);
+    }
+
+    return res.status(200).json({ message: "Grup başarıyla silindi." });
+  } catch (err) {
+    console.error(err);
+    return next(err);
+  }
+};
+
 module.exports = {
   olusturGrup,
   katilGrup,
   gruptanCik,
   listeleTumGruplar,
+  silGrup,
 };
