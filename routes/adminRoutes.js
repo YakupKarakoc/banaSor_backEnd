@@ -88,4 +88,130 @@ router.delete(
   adminController.deleteEntry
 );
 
+/**
+ * @swagger
+ * /api/admin/soru/{id}:
+ *   delete:
+ *     summary: Admin veya SuperUser tarafından soru silme
+ *     tags:
+ *       - Admin
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: Silinecek soru'nun ID'si
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Soru başarıyla silindi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 deletedSoru:
+ *                   type: object
+ *       403:
+ *         description: Yetkisiz - Sadece admin veya superUser erişebilir
+ *       404:
+ *         description: Soru bulunamadı
+ *       500:
+ *         description: Sunucu hatası
+ */
+router.delete(
+  "/soru/:id",
+  authenticate,
+  isAdminOrSuperUser,
+  adminController.deleteSoru
+);
+
+/**
+ * @swagger
+ * /api/admin/cevap/{id}:
+ *   delete:
+ *     summary: Admin veya SuperUser tarafından cevap silme
+ *     tags:
+ *       - Admin
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: Silinecek cevap'in ID'si
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Cevap başarıyla silindi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 deletedCevap:
+ *                   type: object
+ *       403:
+ *         description: Yetkisiz - Sadece admin veya superUser erişebilir
+ *       404:
+ *         description: Cevap bulunamadı
+ *       500:
+ *         description: Sunucu hatası
+ */
+router.delete(
+  "/cevap/:id",
+  authenticate,
+  isAdminOrSuperUser,
+  adminController.deleteCevap
+);
+
+/**
+ * @swagger
+ * /api/admin/grup/{id}:
+ *   delete:
+ *     summary: Admin veya SuperUser tarafından grup silme
+ *     tags:
+ *       - Admin
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: Silinecek grup'un ID'si
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Grup başarıyla silindi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 deletedCevap:
+ *                   type: object
+ *       403:
+ *         description: Yetkisiz - Sadece admin veya superUser erişebilir
+ *       404:
+ *         description: Grup bulunamadı
+ *       500:
+ *         description: Sunucu hatası
+ */
+router.delete(
+  "/grup/:id",
+  authenticate,
+  isAdminOrSuperUser,
+  adminController.deleteGrup
+);
+
 module.exports = router;
