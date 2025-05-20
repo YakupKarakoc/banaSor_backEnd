@@ -484,6 +484,36 @@ const entryTepkiEkleGuncelle = async (req, res) => {
   }
 };
 
+const entryTepkisi = async (req, res) => {
+  const kullaniciId = req.user.kullaniciId;
+  const entryId = req.params.entryId;
+
+  try {
+    // Entry var mı kontrolü
+    const entry = await pool.query(
+      "SELECT entryId FROM Entry WHERE entryId = $1",
+      [entryId]
+    );
+
+    if (entry.rows.length === 0) {
+      return res.status(404).json({ message: "Entry bulunamadı" });
+    }
+
+    // Tepki sorgusu
+    const tepkiQuery = await pool.query(
+      "SELECT tepki FROM EntryTepki WHERE entryId = $1 AND kullaniciId = $2",
+      [entryId, kullaniciId]
+    );
+
+    const tepki = tepkiQuery.rows.length > 0 ? tepkiQuery.rows[0].tepki : null;
+
+    return res.json({ tepki }); // "Like", "Dislike" ya da null
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Tepki sorgusu başarısız");
+  }
+};
+
 module.exports = {
   forumEkle,
   forumGuncelle,
@@ -495,4 +525,5 @@ module.exports = {
   forumlariGetir,
   universiteForumGetir,
   entryTepkiEkleGuncelle,
+  entryTepkisi,
 };

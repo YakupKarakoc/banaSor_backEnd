@@ -12,6 +12,7 @@ const {
   forumDetayGetir,
   universiteForumGetir,
   entryTepkiEkleGuncelle,
+  entryTepkisi,
 } = require("../controllers/forumController");
 
 /**
@@ -511,5 +512,42 @@ router.get("/getir/universite", universiteForumGetir);
  *         description: Sunucu hatası
  */
 router.post("/entry/tepki", auth, entryTepkiEkleGuncelle);
+
+/**
+ * @swagger
+ * /api/forum/entry/tepki/{entryId}:
+ *   get:
+ *     summary: Giriş yapan kullanıcının entry'ye verdiği tepkiyi getirir (Like/Dislike/null)
+ *     tags:
+ *       - Entry Tepki
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: entryId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Tepkisi kontrol edilecek entry ID'si
+ *     responses:
+ *       200:
+ *         description: Kullanıcının verdiği tepki türü
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 tepki:
+ *                   type: string
+ *                   example: "Like"
+ *                   nullable: true
+ *       404:
+ *         description: Entry bulunamadı
+ *       401:
+ *         description: Yetkilendirme hatası
+ *       500:
+ *         description: Sunucu hatası
+ */
+router.get("/entry/tepki/:entryId", auth, entryTepkisi);
 
 module.exports = router;
