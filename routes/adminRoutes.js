@@ -214,4 +214,155 @@ router.delete(
   adminController.deleteGrup
 );
 
+/**
+ * @swagger
+ * /api/admin/bolum/aktifMi/{bolumId}:
+ *   put:
+ *     summary: Admin veya SuperUser tarafından bölümün aktiflik durumunun güncellenmesi (true/false)
+ *     tags:
+ *       - Admin
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: bolumId
+ *         required: true
+ *         description: Güncellenecek bölümün ID'si
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               aktifMi:
+ *                 type: boolean
+ *                 example: true
+ *     responses:
+ *       200:
+ *         description: Bölümün aktiflik durumu başarıyla güncellendi veya zaten o durumdaydı
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Geçersiz veri (aktifMi boolean değil)
+ *       404:
+ *         description: Fakülte bulunamadı
+ *       500:
+ *         description: Sunucu hatası
+ */
+router.put(
+  "/bolum/aktifMi/:bolumId",
+  authenticate,
+  isAdminOrSuperUser,
+  adminController.guncelleBolumAktiflik
+);
+
+/**
+ * @swagger
+ * /api/admin/fakulte/aktifMi/{fakulteId}:
+ *   put:
+ *     summary: Admin veya SuperUser tarafından fakültenin aktiflik durumunun güncellenmesi (true/false)
+ *     tags:
+ *       - Admin
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: fakulteId
+ *         required: true
+ *         description: Güncellenecek fakültenin ID'si
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               aktifMi:
+ *                 type: boolean
+ *                 example: true
+ *     responses:
+ *       200:
+ *         description: Fakülte aktiflik durumu başarıyla güncellendi veya zaten o durumdaydı
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Geçersiz veri (aktifMi boolean değil)
+ *       404:
+ *         description: Fakülte bulunamadı
+ *       500:
+ *         description: Sunucu hatası
+ */
+
+router.put(
+  "/fakulte/aktifMi/:fakulteId",
+  authenticate,
+  isAdminOrSuperUser,
+  adminController.guncelleFakulteAktiflik
+);
+
+/**
+ * @swagger
+ * /api/admin/kullanici/aktifMi/{kullaniciId}:
+ *   put:
+ *     summary: Kullanıcının aktiflik durumunu güncelle (true/false)
+ *     tags:
+ *       - Admin
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: kullaniciId
+ *         required: true
+ *         description: Güncellenecek kullanıcının ID'si
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               aktifMi:
+ *                 type: boolean
+ *                 example: false
+ *     responses:
+ *       200:
+ *         description: Kullanıcı aktiflik durumu başarıyla güncellendi veya zaten o durumdaydı
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Geçersiz veri (aktifMi boolean değil)
+ *       404:
+ *         description: Kullanıcı bulunamadı
+ *       500:
+ *         description: Sunucu hatası
+ */
+router.put(
+  "/kullanici/aktifMi/:kullaniciId",
+  authenticate,
+  isAdminOrSuperUser,
+  adminController.guncelleKullaniciAktiflik
+);
+
 module.exports = router;

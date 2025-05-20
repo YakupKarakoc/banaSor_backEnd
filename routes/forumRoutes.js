@@ -519,7 +519,7 @@ router.post("/entry/tepki", auth, entryTepkiEkleGuncelle);
  *   get:
  *     summary: Giriş yapan kullanıcının entry'ye verdiği tepkiyi getirir (Like/Dislike/null)
  *     tags:
- *       - Entry Tepki
+ *       - Tepkiler
  *     security:
  *       - bearerAuth: []
  *     parameters:
