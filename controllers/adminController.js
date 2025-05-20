@@ -254,6 +254,115 @@ const guncelleKullaniciAktiflik = async (req, res) => {
   }
 };
 
+const kullaniciListeleme = async (req, res) => {
+  const { kullaniciAdi } = req.query;
+
+  try {
+    const values = [];
+    let query = `
+      SELECT 
+        k.kullaniciId,
+        k.ad,
+        k.soyad,
+        k.kullaniciAdi,
+        k.email,
+        k.kullaniciTuruId,
+        kt.ad AS kullanicirolu,
+        k.puan,
+        k.aktifMi,
+        k.onaylandiMi,
+        k.olusturmaTarihi
+      FROM Kullanici k
+      LEFT JOIN KullaniciTuru kt ON k.kullaniciTuruId = kt.kullaniciTuruId
+      WHERE k.onaylandiMi = TRUE AND k.kullaniciTuruId IN (1, 2, 3)
+    `;
+
+    if (kullaniciAdi) {
+      query += ` AND LOWER(k.kullaniciAdi) LIKE $1`;
+      values.push(`%${kullaniciAdi.toLowerCase()}%`);
+    }
+
+    const { rows } = await pool.query(query, values);
+
+    const result = rows.map((user) => ({
+      user: {
+        kullaniciid: user.kullaniciid,
+        ad: user.ad,
+        soyad: user.soyad,
+        kullaniciadi: user.kullaniciadi,
+        email: user.email,
+        kullanicituruid: user.kullanicituruid,
+        puan: user.puan,
+        aktifmi: user.aktifmi,
+        onaylandimi: user.onaylandimi,
+        olusturmatarihi: user.olusturmatarihi,
+        kullaniciTuruId: user.kullanicituruid,
+        kullanicirolu: user.kullanicirolu,
+      },
+    }));
+
+    res.status(200).json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Sunucu hatası" });
+  }
+};
+
+const mezunListeleme = async (req, res) => {
+  const { kullaniciAdi } = req.query;
+
+  try {
+    let query = `
+      SELECT 
+        k.kullaniciId,
+        k.ad,
+        k.soyad,
+        k.kullaniciAdi,
+        k.email,
+        k.kullaniciTuruId,
+        kt.ad AS kullanicirolu,
+        k.puan,
+        k.aktifMi,
+        k.onaylandiMi,
+        k.olusturmaTarihi
+      FROM Kullanici k
+      LEFT JOIN KullaniciTuru kt ON k.kullaniciTuruId = kt.kullaniciTuruId
+      WHERE k.onaylandiMi = TRUE AND k.kullaniciTuruId = 3
+    `;
+
+    const values = [];
+
+    if (kullaniciAdi) {
+      query += ` AND k.kullaniciAdi ILIKE $1`;
+      values.push(`%${kullaniciAdi}%`);
+    }
+
+    const { rows } = await pool.query(query, values);
+
+    const result = rows.map((user) => ({
+      user: {
+        kullaniciid: user.kullaniciid,
+        ad: user.ad,
+        soyad: user.soyad,
+        kullaniciadi: user.kullaniciadi,
+        email: user.email,
+        kullanicituruid: user.kullanicituruid,
+        puan: user.puan,
+        aktifmi: user.aktifmi,
+        onaylandimi: user.onaylandimi,
+        olusturmatarihi: user.olusturmatarihi,
+        kullaniciTuruId: user.kullanicituruid,
+        kullanicirolu: user.kullanicirolu,
+      },
+    }));
+
+    res.status(200).json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Sunucu hatası" });
+  }
+};
+
 module.exports = {
   deleteForum,
   deleteEntry,
@@ -263,4 +372,6 @@ module.exports = {
   guncelleBolumAktiflik,
   guncelleFakulteAktiflik,
   guncelleKullaniciAktiflik,
+  kullaniciListeleme,
+  mezunListeleme,
 };

@@ -319,7 +319,7 @@ router.put(
  * @swagger
  * /api/admin/kullanici/aktifMi/{kullaniciId}:
  *   put:
- *     summary: Kullanıcının aktiflik durumunu güncelle (true/false)
+ *     summary: Admin veya SuperUser tarafından kullanıcının aktiflik durumunu güncelleme (true/false)
  *     tags:
  *       - Admin
  *     security:
@@ -363,6 +363,154 @@ router.put(
   authenticate,
   isAdminOrSuperUser,
   adminController.guncelleKullaniciAktiflik
+);
+
+/**
+ * @swagger
+ * /api/admin/kullanici/listele:
+ *   get:
+ *     summary: Onaylı ve belirli türlerdeki kullanıcıları listeler
+ *     tags:
+ *       - Kullanıcı
+ *     parameters:
+ *       - in: query
+ *         name: kullaniciAdi
+ *         schema:
+ *           type: string
+ *         required: false
+ *         description: Kullanıcı adı ile arama yapar
+ *     responses:
+ *       200:
+ *         description: Başarılı istek - kullanıcılar listelendi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   user:
+ *                     type: object
+ *                     properties:
+ *                       kullaniciid:
+ *                         type: integer
+ *                         example: 1
+ *                       ad:
+ *                         type: string
+ *                         example: Naz
+ *                       soyad:
+ *                         type: string
+ *                         example: Hacıhafızoğlu
+ *                       kullaniciadi:
+ *                         type: string
+ *                         example: nazhhoglu
+ *                       email:
+ *                         type: string
+ *                         example: nazhacihafizoglu@gmail.com
+ *                       kullanicituruid:
+ *                         type: integer
+ *                         example: 1
+ *                       puan:
+ *                         type: integer
+ *                         example: 0
+ *                       aktifmi:
+ *                         type: boolean
+ *                         example: true
+ *                       onaylandimi:
+ *                         type: boolean
+ *                         example: true
+ *                       olusturmatarihi:
+ *                         type: string
+ *                         format: date-time
+ *                         example: 2025-03-15T22:40:06.080Z
+ *                       kullaniciTuruId:
+ *                         type: integer
+ *                         example: 1
+ *                       kullanicirolu:
+ *                         type: string
+ *                         example: Aday Öğrenci
+ *       500:
+ *         description: Sunucu hatası
+ */
+router.get(
+  "/kullanici/listele",
+  authenticate,
+  isAdminOrSuperUser,
+  adminController.kullaniciListeleme
+);
+
+/**
+ * @swagger
+ * /api/admin/kullanici/mezunListele:
+ *   get:
+ *     summary: Onaylanmış ve kullanıcı türü mezun (3) olan kullanıcıları listeler
+ *     tags:
+ *       - Kullanıcı
+ *     parameters:
+ *       - in: query
+ *         name: kullaniciAdi
+ *         schema:
+ *           type: string
+ *         required: false
+ *         description: Kullanıcı adına göre filtreleme yapar
+ *     responses:
+ *       200:
+ *         description: Başarılı istek - mentor kullanıcılar listelendi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   user:
+ *                     type: object
+ *                     properties:
+ *                       kullaniciid:
+ *                         type: integer
+ *                         example: 5
+ *                       ad:
+ *                         type: string
+ *                         example: Ahmet
+ *                       soyad:
+ *                         type: string
+ *                         example: Kara
+ *                       kullaniciadi:
+ *                         type: string
+ *                         example: ahmetk
+ *                       email:
+ *                         type: string
+ *                         example: ahmet@gmail.com
+ *                       kullanicituruid:
+ *                         type: integer
+ *                         example: 3
+ *                       puan:
+ *                         type: integer
+ *                         example: 20
+ *                       aktifmi:
+ *                         type: boolean
+ *                         example: true
+ *                       onaylandimi:
+ *                         type: boolean
+ *                         example: true
+ *                       olusturmatarihi:
+ *                         type: string
+ *                         format: date-time
+ *                         example: 2025-04-01T10:15:00.000Z
+ *                       kullaniciTuruId:
+ *                         type: integer
+ *                         example: 3
+ *                       kullanicirolu:
+ *                         type: string
+ *                         example: Mentor
+ *       500:
+ *         description: Sunucu hatası
+ */
+router.get(
+  "/kullanici/mezunListele",
+  authenticate,
+  isAdminOrSuperUser,
+  adminController.mezunListeleme
 );
 
 module.exports = router;
