@@ -721,6 +721,36 @@ const soruBegendiMi = async (req, res) => {
   }
 };
 
+const cevapTepkisi = async (req, res) => {
+  const kullaniciId = req.user.kullaniciId;
+  const cevapId = req.params.cevapId;
+
+  try {
+    // Cevap var mı kontrolü
+    const cevap = await pool.query(
+      "SELECT cevapId FROM Cevap WHERE cevapId = $1",
+      [cevapId]
+    );
+
+    if (cevap.rows.length === 0) {
+      return res.status(404).json({ message: "Cevap bulunamadı" });
+    }
+
+    // Tepki sorgusu
+    const tepkiQuery = await pool.query(
+      "SELECT tepki FROM CevapTepki WHERE cevapId = $1 AND kullaniciId = $2",
+      [cevapId, kullaniciId]
+    );
+
+    const tepki = tepkiQuery.rows.length > 0 ? tepkiQuery.rows[0].tepki : null;
+
+    return res.json({ tepki }); // "Like", "Dislike", ya da null döner
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Tepki sorgusu başarısız");
+  }
+};
+
 module.exports = {
   konulariGetir,
   soruEkle,
@@ -737,4 +767,5 @@ module.exports = {
   tepkiEkleGuncelle,
   soruBegen,
   soruBegendiMi,
+  cevapTepkisi,
 };

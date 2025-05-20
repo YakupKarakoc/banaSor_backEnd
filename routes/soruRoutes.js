@@ -16,6 +16,7 @@ const {
   tepkiEkleGuncelle,
   soruBegen,
   soruBegendiMi,
+  cevapTepkisi,
 } = require("../controllers/soruController");
 
 const auth = require("../middleware/authMiddleware");
@@ -604,7 +605,7 @@ router.post("/begeni", auth, soruBegen);
  *   get:
  *     summary: Giriş yapan kullanıcının bu soruyu beğenip beğenmediğini kontrol eder
  *     tags:
- *       - Soru Beğeni
+ *       - Tepkiler
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -631,5 +632,42 @@ router.post("/begeni", auth, soruBegen);
  *         description: Sunucu hatası
  */
 router.get("/begeni/:soruId", auth, soruBegendiMi);
+
+/**
+ * @swagger
+ * /api/soru/cevap/tepki/{cevapId}:
+ *   get:
+ *     summary: Giriş yapan kullanıcının cevaba verdiği tepkiyi getirir (Like/Dislike/null)
+ *     tags:
+ *       - Tepkiler
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: cevapId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Tepkisi kontrol edilecek cevabın ID'si
+ *     responses:
+ *       200:
+ *         description: Kullanıcının verdiği tepki türü (Like, Dislike veya null)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 tepki:
+ *                   type: string
+ *                   example: "Like"
+ *                   nullable: true
+ *       404:
+ *         description: Cevap bulunamadı
+ *       401:
+ *         description: Yetkilendirme hatası
+ *       500:
+ *         description: Sunucu hatası
+ */
+router.get("/cevap/tepki/:cevapId", auth, cevapTepkisi);
 
 module.exports = router;
