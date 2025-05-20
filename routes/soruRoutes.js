@@ -15,6 +15,7 @@ const {
   bolumSoruGetir,
   tepkiEkleGuncelle,
   soruBegen,
+  soruBegendiMi,
 } = require("../controllers/soruController");
 
 const auth = require("../middleware/authMiddleware");
@@ -596,5 +597,39 @@ router.post("/cevap/tepki", auth, tepkiEkleGuncelle);
  */
 
 router.post("/begeni", auth, soruBegen);
+
+/**
+ * @swagger
+ * /api/soru/begeni/{soruId}:
+ *   get:
+ *     summary: Giriş yapan kullanıcının bu soruyu beğenip beğenmediğini kontrol eder
+ *     tags:
+ *       - Soru Beğeni
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: soruId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Beğeni durumu kontrol edilecek sorunun ID'si
+ *     responses:
+ *       200:
+ *         description: Beğeni durumu döndürülür
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 begendiMi:
+ *                   type: boolean
+ *                   example: true
+ *       401:
+ *         description: JWT doğrulama başarısız
+ *       500:
+ *         description: Sunucu hatası
+ */
+router.get("/begeni/:soruId", auth, soruBegendiMi);
 
 module.exports = router;

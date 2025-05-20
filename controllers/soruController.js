@@ -701,6 +701,26 @@ const soruBegen = async (req, res) => {
   }
 };
 
+// Giriş yapan kullanıcının bir soruyu beğenip beğenmediğini kontrol eder
+const soruBegendiMi = async (req, res) => {
+  const kullaniciId = req.user.kullaniciId; // Auth middleware'den geliyor
+  const { soruId } = req.params; // URL üzerinden geliyor, örn: /api/soru/begeni/42
+
+  try {
+    const result = await pool.query(
+      "SELECT 1 FROM SoruBegeni WHERE soruId = $1 AND kullaniciId = $2",
+      [soruId, kullaniciId]
+    );
+
+    const begendiMi = result.rows.length > 0;
+
+    res.json({ begendiMi });
+  } catch (err) {
+    console.error("Beğeni kontrol hatası:", err);
+    res.status(500).json({ message: "Beğeni durumu alınamadı" });
+  }
+};
+
 module.exports = {
   konulariGetir,
   soruEkle,
@@ -716,4 +736,5 @@ module.exports = {
   bolumSoruGetir,
   tepkiEkleGuncelle,
   soruBegen,
+  soruBegendiMi,
 };
