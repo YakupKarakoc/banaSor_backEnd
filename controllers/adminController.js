@@ -363,6 +363,190 @@ const mezunListeleme = async (req, res) => {
   }
 };
 
+const adminOner = async (req, res) => {
+  const onerenKullaniciId = req.user.kullaniciId; // JWT'den gelen
+  const { onerilenKullaniciId } = req.body;
+
+  try {
+    if (onerenKullaniciId === onerilenKullaniciId) {
+      return res.status(400).json({ message: "Kendinizi öneremezsiniz." });
+    }
+
+    // Kullanıcı gerçekten var mı kontrolü
+    const { rowCount } = await pool.query(
+      "SELECT 1 FROM Kullanici WHERE kullaniciId = $1",
+      [onerilenKullaniciId]
+    );
+
+    if (rowCount === 0) {
+      return res
+        .status(404)
+        .json({ message: "Önerilen kullanıcı bulunamadı." });
+    }
+
+    // Aynı öneri zaten var mı kontrolü
+    const { rowCount: existingCount } = await pool.query(
+      `SELECT 1 FROM AdminOneri 
+             WHERE onerenKullaniciId = $1 AND onerilenKullaniciId = $2 AND durum = 'Beklemede'`,
+      [onerenKullaniciId, onerilenKullaniciId]
+    );
+
+    if (existingCount > 0) {
+      return res.status(400).json({
+        message: "Bu kullanıcı için zaten bekleyen bir öneriniz var.",
+      });
+    }
+
+    // Yeni öneri ekleme
+    await pool.query(
+      `INSERT INTO AdminOneri (onerenKullaniciId, onerilenKullaniciId)
+             VALUES ($1, $2)`,
+      [onerenKullaniciId, onerilenKullaniciId]
+    );
+
+    return res
+      .status(201)
+      .json({ message: "Admin önerisi başarıyla yapıldı." });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Sunucu hatası." });
+  }
+};
+
+const bekleyenAdminOnerileri = async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+            SELECT 
+                ao.oneriId,
+                k1.kullaniciAdi AS onerenKullaniciAdi,
+                k2.kullaniciAdi AS onerilenKullaniciAdi,
+                ao.oneriTarihi
+            FROM AdminOneri ao
+            JOIN Kullanici k1 ON ao.onerenKullaniciId = k1.kullaniciId
+            JOIN Kullanici k2 ON ao.onerilenKullaniciId = k2.kullaniciId
+            WHERE ao.durum = 'Beklemede'
+            ORDER BY ao.oneriTarihi DESC
+        `);
+
+    res.status(200).json(rows);
+  } catch (err) {
+    console.error("Bekleyen admin önerileri listelenirken hata:", err);
+    res.status(500).json({ message: "Sunucu hatası." });
+  }
+};
+
+const superUserKararEkle = async (req, res) => {
+  const { oneriId, karar } = req.body;
+
+  if (!oneriId || !karar) {
+    return res.status(400).json({ mesaj: "oneriId ve karar gereklidir." });
+  }
+
+  if (!["Onaylandi", "Reddedildi"].includes(karar)) {
+    return res.status(400).json({
+      mesaj:
+        'Geçersiz karar değeri. Sadece "Onaylandi" veya "Reddedildi" olabilir.',
+    });
+  }
+
+  try {
+    const result = await pool.query(
+      "INSERT INTO SuperUserKarar (oneriId, karar) VALUES ($1, $2) RETURNING *",
+      [oneriId, karar]
+    );
+
+    res.status(201).json({
+      mesaj: "Karar başarıyla eklendi.",
+      karar: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Karar eklenirken hata:", error);
+    res.status(500).json({ mesaj: "Sunucu hatası." });
+  }
+};
+
+const adminListeleme = async (req, res) => {
+  const { kullaniciAdi } = req.query;
+
+  try {
+    let query = `
+      SELECT 
+        k.kullaniciId,
+        k.ad,
+        k.soyad,
+        k.kullaniciAdi,
+        k.email,
+        k.kullaniciTuruId,
+        kt.ad AS kullanicirolu,
+        k.puan,
+        k.aktifMi,
+        k.onaylandiMi,
+        k.olusturmaTarihi
+      FROM Kullanici k
+      LEFT JOIN KullaniciTuru kt ON k.kullaniciTuruId = kt.kullaniciTuruId
+      WHERE k.onaylandiMi = TRUE AND k.kullaniciTuruId = 4
+    `;
+
+    const values = [];
+
+    if (kullaniciAdi) {
+      query += ` AND k.kullaniciAdi ILIKE $1`;
+      values.push(`%${kullaniciAdi}%`);
+    }
+
+    const { rows } = await pool.query(query, values);
+
+    const result = rows.map((user) => ({
+      user: {
+        kullaniciid: user.kullaniciid,
+        ad: user.ad,
+        soyad: user.soyad,
+        kullaniciadi: user.kullaniciadi,
+        email: user.email,
+        kullanicituruid: user.kullanicituruid,
+        puan: user.puan,
+        aktifmi: user.aktifmi,
+        onaylandimi: user.onaylandimi,
+        olusturmatarihi: user.olusturmatarihi,
+        kullaniciTuruId: user.kullanicituruid,
+        kullanicirolu: user.kullanicirolu,
+      },
+    }));
+
+    res.status(200).json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Sunucu hatası" });
+  }
+};
+
+const dogrudanAdminYap = async (req, res) => {
+  const { kullaniciId } = req.body;
+
+  if (!kullaniciId) {
+    return res.status(400).json({ mesaj: "kullaniciId gereklidir." });
+  }
+
+  try {
+    const result = await pool.query(
+      "UPDATE Kullanici SET kullaniciTuruId = 4 WHERE kullaniciId = $1 RETURNING *",
+      [kullaniciId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ mesaj: "Kullanıcı bulunamadı." });
+    }
+
+    res.status(200).json({
+      mesaj: "Kullanıcı başarıyla admin yapıldı.",
+      kullanici: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Admin yaparken hata:", error);
+    res.status(500).json({ mesaj: "Sunucu hatası." });
+  }
+};
+
 module.exports = {
   deleteForum,
   deleteEntry,
@@ -374,4 +558,9 @@ module.exports = {
   guncelleKullaniciAktiflik,
   kullaniciListeleme,
   mezunListeleme,
+  adminOner,
+  bekleyenAdminOnerileri,
+  superUserKararEkle,
+  adminListeleme,
+  dogrudanAdminYap,
 };

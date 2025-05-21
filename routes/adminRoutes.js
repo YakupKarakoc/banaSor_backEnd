@@ -3,7 +3,8 @@ const router = express.Router();
 const adminController = require("../controllers/adminController");
 const authenticate = require("../middleware/authMiddleware"); // JWT doğrulama
 const isAdminOrSuperUser = require("../middleware/isAdminOrSuperUser");
-
+const isAdmin = require("../middleware/isAdmin");
+const isSuperUser = require("../middleware/isSuperUser");
 /**
  * @swagger
  * /api/admin/forum/{id}:
@@ -369,9 +370,9 @@ router.put(
  * @swagger
  * /api/admin/kullanici/listele:
  *   get:
- *     summary: Onaylı ve belirli türlerdeki kullanıcıları listeler
+ *     summary: Admin ve SuperUser onaylı hesapları (Aday öğrenci, Üniversite öğrencisi, Mezun) türlerdeki kullanıcıları listeler
  *     tags:
- *       - Kullanıcı
+ *       - Admin
  *     parameters:
  *       - in: query
  *         name: kullaniciAdi
@@ -443,9 +444,9 @@ router.get(
  * @swagger
  * /api/admin/kullanici/mezunListele:
  *   get:
- *     summary: Onaylanmış ve kullanıcı türü mezun (3) olan kullanıcıları listeler
+ *     summary: Admin ve SuperUser onaylanmış ve kullanıcı türü mezun (3) olan kullanıcıları listeler
  *     tags:
- *       - Kullanıcı
+ *       - Admin
  *     parameters:
  *       - in: query
  *         name: kullaniciAdi
@@ -511,6 +512,272 @@ router.get(
   authenticate,
   isAdminOrSuperUser,
   adminController.mezunListeleme
+);
+
+/**
+ * @swagger
+ * /api/admin/adminOner:
+ *   post:
+ *     summary: Adminler başka bir kullanıcıyı admin olarak önerebilir
+ *     tags:
+ *       - Admin
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - onerilenKullaniciId
+ *             properties:
+ *               onerilenKullaniciId:
+ *                 type: integer
+ *                 example: 12
+ *                 description: Admin olarak önerilen kullanıcının ID'si
+ *     responses:
+ *       201:
+ *         description: Admin önerisi başarıyla yapıldı
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Admin önerisi başarıyla yapıldı.
+ *       400:
+ *         description: Hatalı istek (kendini önermeye çalışma, tekrar önerme vb.)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Bu kullanıcı için zaten bekleyen bir öneriniz var.
+ *       404:
+ *         description: Önerilen kullanıcı bulunamadı
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Önerilen kullanıcı bulunamadı.
+ *       500:
+ *         description: Sunucu hatası
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Sunucu hatası.
+ */
+router.post("/adminOner", authenticate, isAdmin, adminController.adminOner);
+
+/**
+ * @swagger
+ * /api/admin/bekleyenOneriler:
+ *   get:
+ *     summary: SuperUser beklemede olan admin önerilerini listeler
+ *     tags:
+ *       - Admin
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Bekleyen admin önerileri başarıyla listelendi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   oneriId:
+ *                     type: integer
+ *                     example: 1
+ *                   onerenKullaniciAdi:
+ *                     type: string
+ *                     example: "mehmet123"
+ *                   onerilenKullaniciAdi:
+ *                     type: string
+ *                     example: "ayse_mentor"
+ *                   oneriTarihi:
+ *                     type: string
+ *                     format: date-time
+ *                     example: "2025-05-21T14:30:00.000Z"
+ *       500:
+ *         description: Sunucu hatası
+ */
+router.get(
+  "/bekleyenOneriler",
+  authenticate,
+  isSuperUser,
+  adminController.bekleyenAdminOnerileri
+);
+
+/**
+ * @swagger
+ * /api/admin/superUserKarar:
+ *   post:
+ *     summary: Super user tarafından bir öneriye karar ver.
+ *     tags:
+ *       - Admin
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - oneriId
+ *               - karar
+ *             properties:
+ *               oneriId:
+ *                 type: integer
+ *                 example: 5
+ *               karar:
+ *                 type: string
+ *                 enum: [Onaylandi, Reddedildi]
+ *                 example: Onaylandi
+ *     responses:
+ *       201:
+ *         description: Karar başarıyla eklendi.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 mesaj:
+ *                   type: string
+ *                 karar:
+ *                   type: object
+ *       400:
+ *         description: Geçersiz istek verisi.
+ *       500:
+ *         description: Sunucu hatası.
+ */
+router.post(
+  "/superUserKarar",
+  authenticate,
+  isSuperUser,
+  adminController.superUserKararEkle
+);
+
+/**
+ * @swagger
+ * /api/admin/kullanici/adminListele:
+ *   get:
+ *     summary: Admin ve SuperUser kullanıcı türü admin (4) olan kullanıcıları listeler
+ *     tags:
+ *       - Admin
+ *     parameters:
+ *       - in: query
+ *         name: kullaniciAdi
+ *         schema:
+ *           type: string
+ *         required: false
+ *         description: Kullanıcı adına göre filtreleme yapar
+ *     responses:
+ *       200:
+ *         description: Başarılı istek - admin kullanıcılar listelendi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   user:
+ *                     type: object
+ *                     properties:
+ *                       kullaniciid:
+ *                         type: integer
+ *                         example: 5
+ *                       ad:
+ *                         type: string
+ *                         example: Ahmet
+ *                       soyad:
+ *                         type: string
+ *                         example: Kara
+ *                       kullaniciadi:
+ *                         type: string
+ *                         example: ahmetk
+ *                       email:
+ *                         type: string
+ *                         example: ahmet@gmail.com
+ *                       kullanicituruid:
+ *                         type: integer
+ *                         example: 3
+ *                       puan:
+ *                         type: integer
+ *                         example: 20
+ *                       aktifmi:
+ *                         type: boolean
+ *                         example: true
+ *                       onaylandimi:
+ *                         type: boolean
+ *                         example: true
+ *                       olusturmatarihi:
+ *                         type: string
+ *                         format: date-time
+ *                         example: 2025-04-01T10:15:00.000Z
+ *                       kullaniciTuruId:
+ *                         type: integer
+ *                         example: 3
+ *                       kullanicirolu:
+ *                         type: string
+ *                         example: Admin
+ *       500:
+ *         description: Sunucu hatası
+ */
+router.get(
+  "/kullanici/adminListele",
+  authenticate,
+  isAdminOrSuperUser,
+  adminController.adminListeleme
+);
+
+/**
+ * @swagger
+ * /api/admin/dogrudanAdmin:
+ *   post:
+ *     summary: SuperUser, bir kullanıcıyı doğrudan admin yapar.
+ *     tags:
+ *       - SuperUser İşlemleri
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - kullaniciId
+ *             properties:
+ *               kullaniciId:
+ *                 type: integer
+ *                 example: 8
+ *     responses:
+ *       200:
+ *         description: Kullanıcı admin yapıldı.
+ *       400:
+ *         description: Eksik veya hatalı veri.
+ *       404:
+ *         description: Kullanıcı bulunamadı.
+ *       500:
+ *         description: Sunucu hatası.
+ */
+router.post(
+  "/dogrudanAdmin",
+  authenticate,
+  isSuperUser,
+  adminController.dogrudanAdminYap
 );
 
 module.exports = router;
