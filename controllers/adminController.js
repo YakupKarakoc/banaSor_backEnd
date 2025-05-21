@@ -547,6 +547,34 @@ const dogrudanAdminYap = async (req, res) => {
   }
 };
 
+const adminliktenCikarma = async (req, res) => {
+  const { kullaniciId } = req.body;
+
+  if (!kullaniciId) {
+    return res.status(400).json({ mesaj: "kullaniciId gereklidir." });
+  }
+
+  try {
+    const result = await pool.query(
+      "UPDATE Kullanici SET kullaniciTuruId = 3 WHERE kullaniciId = $1 RETURNING *",
+      [kullaniciId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ mesaj: "Kullanıcı bulunamadı." });
+    }
+
+    res.status(200).json({
+      mesaj:
+        "Adminlik yetkisi başarıyla kullanıcıdan alındı. Mezun Öğrenci olarak güncellendi.",
+      kullanici: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Adminlikten alırken hata:", error);
+    res.status(500).json({ mesaj: "Sunucu hatası." });
+  }
+};
+
 module.exports = {
   deleteForum,
   deleteEntry,
@@ -563,4 +591,5 @@ module.exports = {
   superUserKararEkle,
   adminListeleme,
   dogrudanAdminYap,
+  adminliktenCikarma,
 };

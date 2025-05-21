@@ -780,4 +780,40 @@ router.post(
   adminController.dogrudanAdminYap
 );
 
+/**
+ * @swagger
+ * /api/admin/adminliktenCikarma:
+ *   post:
+ *     summary: SuperUser, bir kullanıcıyı adminlikten alır.
+ *     tags:
+ *       - Admin
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - kullaniciId
+ *             properties:
+ *               kullaniciId:
+ *                 type: integer
+ *                 example: 8
+ *     responses:
+ *       200:
+ *         description: Kullanıcı adminlikten alındı.
+ *       400:
+ *         description: Eksik veya hatalı veri.
+ *       404:
+ *         description: Kullanıcı bulunamadı.
+ *       500:
+ *         description: Sunucu hatası.
+ */
+router.post(
+  "/adminliktenCikarma",
+  authenticate,
+  isSuperUser,
+  adminController.adminliktenCikarma
+);
+
 module.exports = router;
