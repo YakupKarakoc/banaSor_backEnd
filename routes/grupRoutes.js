@@ -8,6 +8,8 @@ const {
   gruptanCik,
   listeleTumGruplar,
   silGrup,
+  uyeOldugumGruplar,
+  grupUyeDurumu,
 } = require("../controllers/grupController");
 
 /**
@@ -234,5 +236,101 @@ router.get("/grupList", auth, listeleTumGruplar);
  */
 
 router.delete("/grupSil/:id", auth, silGrup);
+
+/**
+ * @swagger
+ * /api/grup/uyeOldugumGruplar:
+ *   get:
+ *     summary: Kullanıcının üye olduğu grupları getir
+ *     description: Giriş yapmış kullanıcının üye olduğu grupların adını, takipçi sayısını, oluşturanın kullanıcı adını ve oluşturulma tarihini döner.
+ *     tags:
+ *       - Grup
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Kullanıcının üye olduğu gruplar başarıyla getirildi.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 gruplar:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       grupId:
+ *                         type: integer
+ *                         example: 1
+ *                       grupAdi:
+ *                         type: string
+ *                         example: Yazılım Takımı
+ *                       olusturmaTarihi:
+ *                         type: string
+ *                         format: date-time
+ *                         example: 2025-05-21T12:00:00.000Z
+ *                       olusturanKullanici:
+ *                         type: string
+ *                         example: mehmet123
+ *                       takipciSayisi:
+ *                         type: integer
+ *                         example: 15
+ *       500:
+ *         description: Sunucu hatası
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 mesaj:
+ *                   type: string
+ *                   example: Gruplar alınırken hata oluştu.
+ */
+router.get("/uyeOldugumGruplar", auth, uyeOldugumGruplar);
+
+/**
+ * @swagger
+ * /api/grup/uyeMi/{grupId}:
+ *   get:
+ *     summary: Kullanıcının gruba üyelik durumunu kontrol et
+ *     description: Giriş yapmış kullanıcının belirtilen gruba üye olup olmadığını döner.
+ *     tags:
+ *       - Grup
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: grupId
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Üyelik durumu kontrol edilecek grubun ID'si
+ *     responses:
+ *       200:
+ *         description: Üyelik durumu getirildi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 grupId:
+ *                   type: integer
+ *                   example: 2
+ *                 uyeMi:
+ *                   type: boolean
+ *                   example: true
+ *       500:
+ *         description: Sunucu hatası
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 mesaj:
+ *                   type: string
+ *                   example: Grup üyelik durumu kontrol edilirken hata oluştu.
+ */
+router.get("/uyeMi/:grupId", auth, grupUyeDurumu);
 
 module.exports = router;

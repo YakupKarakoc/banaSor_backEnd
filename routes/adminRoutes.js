@@ -816,4 +816,61 @@ router.post(
   adminController.adminliktenCikarma
 );
 
+/**
+ * @swagger
+ * /api/admin/adminliktenAyril:
+ *   post:
+ *     summary: Kullanıcının adminlikten ayrılması
+ *     description: Giriş yapmış kullanıcı admin rolünden çıkarılır ve kullanıcı türü "3" olarak güncellenir.
+ *     tags:
+ *       - Admin
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Adminlikten ayrılma başarılı
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 mesaj:
+ *                   type: string
+ *                   example: Adminlikten ayrılma işlemi başarılı.
+ *                 kullanici:
+ *                   type: object
+ *                   properties:
+ *                     kullaniciId:
+ *                       type: integer
+ *                       example: 12
+ *                     ad:
+ *                       type: string
+ *                       example: Ahmet
+ *                     soyad:
+ *                       type: string
+ *                       example: Yılmaz
+ *                     email:
+ *                       type: string
+ *                       example: ahmet@example.com
+ *                     kullaniciTuruId:
+ *                       type: integer
+ *                       example: 3
+ *       500:
+ *         description: Adminlikten ayrılma işlemi sırasında sunucu hatası oluştu
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 mesaj:
+ *                   type: string
+ *                   example: Adminlikten ayrılma işlemi başarısız.
+ */
+router.post(
+  "/adminliktenAyril",
+  authenticate,
+  isAdmin,
+  adminController.adminliktenAyril
+);
+
 module.exports = router;

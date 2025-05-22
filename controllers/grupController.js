@@ -226,10 +226,64 @@ const silGrup = async (req, res, next) => {
   }
 };
 
+const uyeOldugumGruplar = async (req, res) => {
+  const kullaniciId = req.user.kullaniciId;
+
+  try {
+    const sonuc = await pool.query(
+      `SELECT 
+         g.grupId,
+         g.ad AS grupAdi,
+         g.olusturmaTarihi,
+         ku.kullaniciAdi AS olusturanKullanici,
+         COUNT(gu2.uyeId) AS takipciSayisi
+       FROM GrupUye gu
+       JOIN Grup g ON gu.grupId = g.grupId
+       JOIN Kullanici ku ON g.olusturanId = ku.kullaniciId
+       LEFT JOIN GrupUye gu2 ON g.grupId = gu2.grupId
+       WHERE gu.uyeId = $1
+       GROUP BY g.grupId, g.ad, g.olusturmaTarihi, ku.kullaniciAdi`,
+      [kullaniciId]
+    );
+
+    res.json({ gruplar: sonuc.rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ mesaj: "Gruplar alınırken hata oluştu." });
+  }
+};
+
+const grupUyeDurumu = async (req, res) => {
+  const kullaniciId = req.user.kullaniciId;
+  const { grupId } = req.params;
+
+  try {
+    const sonuc = await pool.query(
+      `SELECT 1 FROM GrupUye 
+       WHERE grupId = $1 AND uyeId = $2`,
+      [grupId, kullaniciId]
+    );
+
+    const uyeMi = sonuc.rowCount > 0;
+
+    res.json({
+      grupId: parseInt(grupId),
+      uyeMi,
+    });
+  } catch (err) {
+    console.error(err);
+    res
+      .status(500)
+      .json({ mesaj: "Grup üyelik durumu kontrol edilirken hata oluştu." });
+  }
+};
+
 module.exports = {
   olusturGrup,
   katilGrup,
   gruptanCik,
   listeleTumGruplar,
   silGrup,
+  uyeOldugumGruplar,
+  grupUyeDurumu,
 };

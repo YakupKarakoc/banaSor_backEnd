@@ -575,6 +575,27 @@ const adminliktenCikarma = async (req, res) => {
   }
 };
 
+const adminliktenAyril = async (req, res) => {
+  const kullaniciId = req.user.kullaniciId;
+
+  try {
+    const sonuc = await pool.query(
+      `UPDATE Kullanici SET  kullaniciTuruId = 3
+       WHERE kullaniciId = $1
+       RETURNING  * `,
+      [kullaniciId]
+    );
+
+    res.json({
+      mesaj: "Adminlikten ayrılma işlemi başarılı.",
+      kullanici: sonuc.rows[0],
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ mesaj: "Adminlikten ayrılma işlemi başarısız." });
+  }
+};
+
 module.exports = {
   deleteForum,
   deleteEntry,
@@ -592,4 +613,5 @@ module.exports = {
   adminListeleme,
   dogrudanAdminYap,
   adminliktenCikarma,
+  adminliktenAyril,
 };
