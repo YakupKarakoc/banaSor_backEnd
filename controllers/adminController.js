@@ -418,8 +418,8 @@ const bekleyenAdminOnerileri = async (req, res) => {
    const { rows } = await pool.query(`
    SELECT 
      ao.oneriId,
-     ao.onerenKullaniciId,    -- EKLENDİ
-     ao.onerilenKullaniciId,  -- EKLENDİ
+     ao.onerenKullaniciId,    
+     ao.onerilenKullaniciId,  
      k1.kullaniciAdi AS onerenKullaniciAdi,
      k2.kullaniciAdi AS onerilenKullaniciAdi,
      ao.oneriTarihi
