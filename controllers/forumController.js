@@ -53,6 +53,17 @@ const forumGuncelle = async (req, res) => {
         .json({ message: "Aktif olmayan kullanıcılar işlem yapamaz" });
     }
 
+    const entryKontrol = await pool.query(
+      "SELECT 1 FROM Entry WHERE forumId = $1 LIMIT 1",
+      [forumId]
+    );
+
+    if (entryKontrol.rows.length > 0) {
+      return res
+        .status(400)
+        .json({ message: "Bu foruma entry girildiği için güncellenemez" });
+    }
+
     // Forumun sahibine ait mi kontrolü
     const forum = await pool.query(
       `SELECT * FROM Forum WHERE forumId = $1 AND olusturanId = $2`,
@@ -106,6 +117,17 @@ const forumSil = async (req, res) => {
 
     if (forum.rows[0].olusturanid !== kullaniciId) {
       return res.status(403).send("Bu forumu silme yetkiniz yok.");
+    }
+
+    const entryKontrol = await pool.query(
+      "SELECT 1 FROM Entry WHERE forumId = $1 LIMIT 1",
+      [forumId]
+    );
+
+    if (entryKontrol.rows.length > 0) {
+      return res
+        .status(400)
+        .json({ message: "Bu foruma entry girildiği için silinemez" });
     }
 
     await pool.query("DELETE FROM Forum WHERE forumId = $1", [forumId]);

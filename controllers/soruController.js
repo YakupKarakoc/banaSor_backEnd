@@ -85,6 +85,18 @@ const soruGuncelle = async (req, res) => {
         .json({ message: "Bu soruyu güncelleme yetkiniz yok" });
     }
 
+    // Cevap var mı kontrol et
+    const cevapKontrol = await pool.query(
+      "SELECT 1 FROM Cevap WHERE soruId = $1 LIMIT 1",
+      [soruId]
+    );
+
+    if (cevapKontrol.rows.length > 0) {
+      return res
+        .status(400)
+        .json({ message: "Bu soruya cevap verildiği için güncellenemez" });
+    }
+
     // Soruyu güncelle
     const result = await pool.query(
       "UPDATE Soru SET icerik = $1 WHERE soruId = $2 RETURNING *",
@@ -124,6 +136,17 @@ const soruSil = async (req, res) => {
 
     if (kontrol.rows.length === 0) {
       return res.status(403).json({ message: "Bu soruyu silme yetkiniz yok" });
+    }
+
+    const cevapKontrol = await pool.query(
+      "SELECT 1 FROM Cevap WHERE soruId = $1 LIMIT 1",
+      [soruId]
+    );
+
+    if (cevapKontrol.rows.length > 0) {
+      return res
+        .status(400)
+        .json({ message: "Bu soruya cevap verildiği için silinemez" });
     }
 
     await pool.query("DELETE FROM Soru WHERE soruId = $1", [soruId]);

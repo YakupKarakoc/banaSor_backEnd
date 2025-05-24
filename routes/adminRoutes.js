@@ -750,7 +750,7 @@ router.get(
  *   post:
  *     summary: SuperUser, bir kullanıcıyı doğrudan admin yapar.
  *     tags:
- *       - SuperUser İşlemleri
+ *       - Admin
  *     requestBody:
  *       required: true
  *       content:

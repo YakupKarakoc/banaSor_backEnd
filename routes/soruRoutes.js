@@ -100,7 +100,7 @@ router.post("/soruOlustur", auth, soruEkle);
  * @swagger
  * /api/soru/soruGuncelle/{id}:
  *   patch:
- *     summary: Soru içeriğini güncelle
+ *     summary: Soru içeriğini güncelle (sadece cevap verilmemişse)
  *     tags: [Sorular]
  *     security:
  *       - bearerAuth: []
@@ -124,18 +124,21 @@ router.post("/soruOlustur", auth, soruEkle);
  *     responses:
  *       200:
  *         description: Güncellenen soru
+ *       400:
+ *         description: Soruya cevap verildiği için güncellenemez
  *       403:
  *         description: Soru güncellenemedi - Kullanıcı aktif değil veya yetkisi yok
  *       500:
- *         description: Soru güncellenemedi
+ *         description: Soru güncellenemedi - Sunucu hatası
  */
+
 router.patch("/soruGuncelle/:id", auth, soruGuncelle);
 
 /**
  * @swagger
  * /api/soru/soruSil/{id}:
  *   delete:
- *     summary: Soru sil (sadece kendi sorusu)
+ *     summary: Soru sil (sadece cevap verilmemişse)
  *     tags: [Sorular]
  *     security:
  *       - bearerAuth: []
@@ -149,6 +152,8 @@ router.patch("/soruGuncelle/:id", auth, soruGuncelle);
  *     responses:
  *       204:
  *         description: Soru silindi
+ *       400:
+ *         description: Soruya cevap verildiği için silinemez
  *       403:
  *         description: Bu soruyu silme yetkiniz yok veya hesabınız pasif durumda
  */

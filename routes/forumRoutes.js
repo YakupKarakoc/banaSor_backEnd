@@ -73,7 +73,7 @@ router.post("/forumEkle", auth, forumEkle);
  * /api/forum/forumGuncelle:
  *   patch:
  *     summary: Forum başlığını güncelle
- *     description: Kullanıcıya ait forumun başlığını günceller. Sadece aktif kullanıcılar işlem yapabilir.
+ *     description: Kullanıcıya ait forumun başlığını günceller. Sadece aktif kullanıcılar işlem yapabilir. Entry girildiyse güncellenemez.
  *     tags:
  *       - Forum
  *     security:
@@ -97,6 +97,8 @@ router.post("/forumEkle", auth, forumEkle);
  *     responses:
  *       200:
  *         description: Başlık başarıyla güncellendi
+ *       400:
+ *         description: Foruma entry girildiği için güncellenemez
  *       403:
  *         description: Başlığı güncelleme yetkisi yok veya kullanıcı pasif durumda
  *       500:
@@ -110,7 +112,7 @@ router.patch("/forumGuncelle", auth, forumGuncelle);
  * /api/forum/forumSil:
  *   delete:
  *     summary: Forum sil
- *     description: Kullanıcıya ait foruma ait veriyi siler. Hesabı pasif olan kullanıcılar bu işlemi yapamaz.
+ *     description: Kullanıcıya ait foruma ait veriyi siler. Hesabı pasif olan kullanıcılar bu işlemi yapamaz. Entry girildiyse silinemez.
  *     tags:
  *       - Forum
  *     requestBody:
@@ -127,6 +129,8 @@ router.patch("/forumGuncelle", auth, forumGuncelle);
  *     responses:
  *       200:
  *         description: Forum başarıyla silindi
+ *       400:
+ *         description: Foruma entry girildiği için silinemez
  *       403:
  *         description: Hesabınız pasif durumda, işlem yapılamaz
  *       404:
