@@ -415,18 +415,20 @@ const adminOner = async (req, res) => {
 
 const bekleyenAdminOnerileri = async (req, res) => {
   try {
-    const { rows } = await pool.query(`
-            SELECT 
-                ao.oneriId,
-                k1.kullaniciAdi AS onerenKullaniciAdi,
-                k2.kullaniciAdi AS onerilenKullaniciAdi,
-                ao.oneriTarihi
-            FROM AdminOneri ao
-            JOIN Kullanici k1 ON ao.onerenKullaniciId = k1.kullaniciId
-            JOIN Kullanici k2 ON ao.onerilenKullaniciId = k2.kullaniciId
-            WHERE ao.durum = 'Beklemede'
-            ORDER BY ao.oneriTarihi DESC
-        `);
+   const { rows } = await pool.query(`
+   SELECT 
+     ao.oneriId,
+     ao.onerenKullaniciId,    
+     ao.onerilenKullaniciId,  
+     k1.kullaniciAdi AS onerenKullaniciAdi,
+     k2.kullaniciAdi AS onerilenKullaniciAdi,
+     ao.oneriTarihi
+   FROM AdminOneri ao
+   JOIN Kullanici k1 ON ao.onerenKullaniciId = k1.kullaniciId
+   JOIN Kullanici k2 ON ao.onerilenKullaniciId = k2.kullaniciId
+   WHERE ao.durum = 'Beklemede'
+   ORDER BY ao.oneriTarihi DESC
+ `);
 
     res.status(200).json(rows);
   } catch (err) {

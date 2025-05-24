@@ -77,6 +77,8 @@ WHERE k.email = $1;
         kullaniciId: userData.kullaniciid,
         email: userData.email,
         kullaniciTuruId: userData.kullanicituruid,
+            // kullanicirolu: userData.kullanicirolu  // ← ekle!
+
       },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }

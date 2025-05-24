@@ -869,7 +869,6 @@ router.post(
 router.post(
   "/adminliktenAyril",
   authenticate,
-  isAdmin,
   adminController.adminliktenAyril
 );
 
