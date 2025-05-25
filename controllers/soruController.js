@@ -27,6 +27,10 @@ const soruEkle = async (req, res) => {
     timeZone: "Europe/Istanbul",
   });
 
+  if (!universiteId) {
+    return res.status(400).json({ error: "universiteId zorunludur." });
+  }
+
   try {
     // Kullanıcının aktif olup olmadığını kontrol et
     const kullanici = await pool.query(

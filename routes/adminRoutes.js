@@ -872,4 +872,111 @@ router.post(
   adminController.adminliktenAyril
 );
 
+/**
+ * @swagger
+ * /api/admin/fakulteEkle:
+ *   post:
+ *     summary: Yeni bir fakülte ekle
+ *     tags: [Admin]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - ad
+ *               - universiteId
+ *             properties:
+ *               ad:
+ *                 type: string
+ *                 example: Mühendislik Fakültesi
+ *               universiteId:
+ *                 type: integer
+ *                 example: 1
+ *               aktifMi:
+ *                 type: boolean
+ *                 example: true
+ *     responses:
+ *       201:
+ *         description: Fakülte başarıyla eklendi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 fakulteId:
+ *                   type: integer
+ *                 ad:
+ *                   type: string
+ *                 universiteId:
+ *                   type: integer
+ *                 aktifMi:
+ *                   type: boolean
+ *       400:
+ *         description: Eksik alanlar
+ *       500:
+ *         description: Sunucu hatası
+ */
+router.post(
+  "/fakulteEkle",
+  authenticate,
+  isSuperUser,
+  adminController.fakulteEkle
+);
+
+/**
+ * @swagger
+ * /api/admin/bolumEkle:
+ *   post:
+ *     summary: Yeni bir bölüm ekle
+ *     tags: [Admin]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - ad
+ *               - universiteId
+ *               - fakulteId
+ *             properties:
+ *               ad:
+ *                 type: string
+ *                 example: Bilgisayar Mühendisliği
+ *               universiteId:
+ *                 type: integer
+ *                 example: 1
+ *               fakulteId:
+ *                 type: integer
+ *                 example: 2
+ *               aktifMi:
+ *                 type: boolean
+ *                 example: true
+ *     responses:
+ *       201:
+ *         description: Bölüm başarıyla eklendi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 bolumId:
+ *                   type: integer
+ *                 ad:
+ *                   type: string
+ *                 universiteId:
+ *                   type: integer
+ *                 fakulteId:
+ *                   type: integer
+ *                 aktifMi:
+ *                   type: boolean
+ *       400:
+ *         description: Eksik alanlar
+ *       500:
+ *         description: Sunucu hatası
+ */
+router.post("/bolumEkle", authenticate, isSuperUser, adminController.bolumEkle);
+
 module.exports = router;

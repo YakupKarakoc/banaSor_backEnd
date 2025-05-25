@@ -415,7 +415,7 @@ const adminOner = async (req, res) => {
 
 const bekleyenAdminOnerileri = async (req, res) => {
   try {
-   const { rows } = await pool.query(`
+    const { rows } = await pool.query(`
    SELECT 
      ao.oneriId,
      ao.onerenKullaniciId,    
@@ -598,6 +598,49 @@ const adminliktenAyril = async (req, res) => {
   }
 };
 
+const fakulteEkle = async (req, res) => {
+  const { ad, universiteId, aktifMi } = req.body;
+
+  if (!ad || !universiteId) {
+    return res.status(400).json({ error: "ad ve universiteId zorunludur." });
+  }
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO Fakulte (ad, universiteId, aktifMi) VALUES ($1, $2, COALESCE($3, TRUE)) RETURNING *`,
+      [ad, universiteId, aktifMi]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error("Fakülte eklenirken hata:", error);
+    res.status(500).json({ error: "Sunucu hatası." });
+  }
+};
+
+const bolumEkle = async (req, res) => {
+  const { ad, universiteId, fakulteId, aktifMi } = req.body;
+
+  if (!ad || !universiteId || !fakulteId) {
+    return res
+      .status(400)
+      .json({ error: "ad, universiteId ve fakulteId zorunludur." });
+  }
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO Bolum (ad, universiteId, fakulteId, aktifMi)
+       VALUES ($1, $2, $3, COALESCE($4, TRUE)) RETURNING *`,
+      [ad, universiteId, fakulteId, aktifMi]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error("Bölüm eklenirken hata:", error);
+    res.status(500).json({ error: "Sunucu hatası." });
+  }
+};
+
 module.exports = {
   deleteForum,
   deleteEntry,
@@ -616,4 +659,6 @@ module.exports = {
   dogrudanAdminYap,
   adminliktenCikarma,
   adminliktenAyril,
+  fakulteEkle,
+  bolumEkle,
 };
