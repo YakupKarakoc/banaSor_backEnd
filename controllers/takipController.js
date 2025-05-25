@@ -97,10 +97,12 @@ const getirTakipEdilenler = async (req, res) => {
   try {
     const result = await pool.query(
       `
-      SELECT u.ad
-      FROM UniversiteTakip ut
-      JOIN Universite u ON u.universiteId = ut.universiteId
-      WHERE ut.kullaniciId = $1
+      SELECT
+    u.universiteId,
+    u.ad
+  FROM UniversiteTakip ut
+  JOIN Universite u ON u.universiteId = ut.universiteId
+  WHERE ut.kullaniciId = $1
     `,
       [kullaniciId]
     );
