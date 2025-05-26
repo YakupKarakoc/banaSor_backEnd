@@ -215,6 +215,7 @@ router.get("/soru/begenilenler", auth, begenilenSorulariGetir);
  * /api/profil/guncelle:
  *   put:
  *     summary: Kullanıcı profilini güncelle (email hariç)
+ *     description: Kullanıcı profil bilgilerini günceller. Şifre alanı isteğe bağlıdır - gönderilmezse mevcut şifre korunur.
  *     tags: [Profil]
  *     security:
  *       - bearerAuth: []
@@ -234,6 +235,7 @@ router.get("/soru/begenilenler", auth, begenilenSorulariGetir);
  *               sifre:
  *                 type: string
  *                 example: yenisifre123
+ *                 description: İsteğe bağlı - gönderilmezse mevcut şifre korunur
  *               kullaniciAdi:
  *                 type: string
  *                 example: ahmetk
@@ -243,7 +245,6 @@ router.get("/soru/begenilenler", auth, begenilenSorulariGetir);
  *             required:
  *               - ad
  *               - soyad
- *               - sifre
  *               - kullaniciAdi
  *               - aktifMi
  *     responses:
@@ -399,4 +400,4 @@ router.get("/entry/begenilenler", auth, begenilenEntryleriGetir);
  */
 router.get("/cevap/begenilenler", auth, begenilenCevaplariGetir);
 
-module.exports = router;
+module.exports = router;

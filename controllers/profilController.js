@@ -170,19 +170,38 @@ const profilGuncelle = async (req, res) => {
   const { ad, soyad, sifre, kullaniciAdi, aktifMi } = req.body;
 
   try {
-    const hashedPassword = await bcrypt.hash(sifre, 10);
+    let updateQuery;
+    let params;
 
-    const sonuc = await pool.query(
-      `UPDATE Kullanici SET 
+    // Şifre gönderildi mi kontrol et
+    if (sifre) {
+      // Şifre gönderildiyse hash'le ve tüm alanları güncelle
+      const hashedPassword = await bcrypt.hash(sifre, 10);
+      
+      updateQuery = `UPDATE Kullanici SET 
          ad = $1,
          soyad = $2,
          sifre = $3,
          kullaniciAdi = $4,
          aktifMi = $5
        WHERE kullaniciId = $6
-       RETURNING kullaniciId, ad, soyad, kullaniciAdi, aktifMi`,
-      [ad, soyad, hashedPassword, kullaniciAdi, aktifMi, kullaniciId]
-    );
+       RETURNING kullaniciId, ad, soyad, kullaniciAdi, aktifMi`;
+      
+      params = [ad, soyad, hashedPassword, kullaniciAdi, aktifMi, kullaniciId];
+    } else {
+      // Şifre gönderilmediyse sadece diğer alanları güncelle
+      updateQuery = `UPDATE Kullanici SET 
+         ad = $1,
+         soyad = $2,
+         kullaniciAdi = $3,
+         aktifMi = $4
+       WHERE kullaniciId = $5
+       RETURNING kullaniciId, ad, soyad, kullaniciAdi, aktifMi`;
+      
+      params = [ad, soyad, kullaniciAdi, aktifMi, kullaniciId];
+    }
+
+    const sonuc = await pool.query(updateQuery, params);
 
     res.json({ mesaj: "Güncelleme başarılı", kullanici: sonuc.rows[0] });
   } catch (err) {
