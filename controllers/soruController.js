@@ -778,6 +778,55 @@ const cevapTepkisi = async (req, res) => {
   }
 };
 
+const konuSoruGetir = async (req, res) => {
+  const { konuId } = req.query;
+
+  let query = `
+    SELECT 
+      s.soruId,
+      s.icerik,
+      s.olusturmaTarihi,
+      k.kullaniciId,
+      k.kullaniciAdi AS kullaniciAdi,
+      u.ad AS universiteAd,
+      b.ad AS bolumAd,
+      ko.ad AS konuAd,
+      COUNT(DISTINCT c.cevapId) AS cevapSayisi,
+      COUNT(DISTINCT sb.begeniId) AS begeniSayisi
+    FROM Soru s
+    LEFT JOIN Kullanici k ON s.soranId = k.kullaniciId
+    LEFT JOIN Universite u ON s.universiteId = u.universiteId
+    LEFT JOIN Bolum b ON s.bolumId = b.bolumId
+    LEFT JOIN Konu ko ON s.konuId = ko.konuId
+    LEFT JOIN Cevap c ON s.soruId = c.soruId
+    LEFT JOIN SoruBegeni sb ON s.soruId = sb.soruId
+    WHERE 1=1
+  `;
+
+  const values = [];
+
+  if (konuId) {
+    values.push(konuId);
+    query += ` AND s.konuId = $${values.length}`;
+  }
+
+  query += `
+    GROUP BY 
+      s.soruId, s.icerik, s.olusturmaTarihi,
+      k.kullaniciId, k.kullaniciAdi,
+      u.ad, b.ad, ko.ad
+    ORDER BY s.olusturmaTarihi DESC
+  `;
+
+  try {
+    const result = await pool.query(query, values);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Sorular getirilemedi");
+  }
+};
+
 module.exports = {
   konulariGetir,
   soruEkle,
@@ -795,4 +844,5 @@ module.exports = {
   soruBegen,
   soruBegendiMi,
   cevapTepkisi,
+  konuSoruGetir,
 };
